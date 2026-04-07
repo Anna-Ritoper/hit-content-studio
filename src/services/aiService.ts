@@ -1,5 +1,6 @@
 import { SYSTEM_PROMPT_GUIDELINES, cleanGeneratedText } from "../constants";
 import { isDemoMode, DEMO_POST_TEXT, DEMO_SVG } from "../demoData";
+import { edhecLogoSvgGroup } from "../edhecLogo";
 
 // Simulate typing effect: reveal text character by character over ~2.5s
 const simulateStreaming = async (text: string, onChunk: (chunk: string) => void): Promise<string> => {
@@ -272,6 +273,9 @@ export const generateVisualSvg = async (params: {
 
   const viewBox = params.aspectRatio === '1:1' ? "0 0 1080 1080" : params.aspectRatio === '4:5' ? "0 0 1080 1350" : "0 0 1080 1920";
 
+  // EDHEC logo SVG snippet to embed in the bottom right of every visual
+  const logoSnippet = edhecLogoSvgGroup(parseInt(viewBox.split(' ')[2]) - 260, parseInt(viewBox.split(' ')[3]) - 120, 0.35);
+
   const prompt = `Generate a complete, valid SVG infographic (viewBox="${viewBox}") using the EDHEC Management in Innovative Health visual identity.
 
 Design rules:
@@ -280,7 +284,8 @@ Design rules:
 - Body font: DM Sans
 - Accent colors: coral #D4614A and teal #2A7D6B
 - Corner brackets: thin 2px bordeaux lines in top-left and bottom-right corners (decorative, 40px length)
-- EDHEC branding: bottom right, "EDHEC" text in Playfair Display #6B1E2E with subtitle "Business School"
+- EDHEC logo: You MUST include the following SVG group in the bottom right corner of the visual. Copy it EXACTLY as provided, do not modify it:
+${logoSnippet}
 - Source attribution: bottom left, small DM Sans, color #888
 
 ${SYSTEM_PROMPT_GUIDELINES}

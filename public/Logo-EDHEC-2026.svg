@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120">
+  <!-- EDHEC Business School Logo Recreation -->
+  <!-- Geometric symbol: fragmented pinwheel pattern -->
+  <g transform="translate(60,60)" fill="#6B1E2E">
+    <!-- Top arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(0)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(0)"/>
+    <!-- Top-right arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(45)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(45)"/>
+    <!-- Right arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(90)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(90)"/>
+    <!-- Bottom-right arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(135)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(135)"/>
+    <!-- Bottom arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(180)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(180)"/>
+    <!-- Bottom-left arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(225)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(225)"/>
+    <!-- Left arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(270)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(270)"/>
+    <!-- Top-left arm -->
+    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(315)"/>
+    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(315)"/>
+    <!-- Inner ring fragments -->
+    <path d="M-8,-18 A20,20 0 0,1 8,-18" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M18,-8 A20,20 0 0,1 18,8" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M8,18 A20,20 0 0,1 -8,18" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M-18,8 A20,20 0 0,1 -18,-8" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- EDHEC wordmark -->
+  <text x="130" y="72" font-family="'Playfair Display', 'Georgia', serif" font-weight="700" font-size="64" fill="#6B1E2E" letter-spacing="2">EDHEC</text>
+  <!-- BUSINESS SCHOOL subtitle -->
+  <text x="132" y="100" font-family="'DM Sans', 'Helvetica Neue', sans-serif" font-weight="400" font-size="18" fill="#6B1E2E" letter-spacing="8">BUSINESS SCHOOL</text>
+</svg>

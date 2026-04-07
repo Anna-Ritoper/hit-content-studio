@@ -27,10 +27,37 @@ import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { StyleRule } from '../types';
 import { generateVisualSvg } from '../services/aiService';
 import { formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
+import { EDHEC_LOGO_PATH } from '../edhecLogo';
 import PptxGenJS from 'pptxgenjs';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// Fetch the EDHEC logo SVG and convert to base64 PNG for PPTX embedding
+async function fetchLogoBase64(): Promise<string | null> {
+  try {
+    const res = await fetch(EDHEC_LOGO_PATH);
+    const svgText = await res.text();
+    const blob = new Blob([svgText], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = reject;
+      img.src = url;
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth || 520;
+    canvas.height = img.naturalHeight || 120;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    return canvas.toDataURL('image/png');
+  } catch {
+    return null;
+  }
 }
 
 type SlideType = 'cover' | 'content' | 'stat' | 'columns' | 'cta';
@@ -107,16 +134,23 @@ export default function Visuals() {
   };
 
   const exportPptxQuick = async () => {
+    const logoData = await fetchLogoBase64();
     const pptx = new PptxGenJS();
     pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 7.5 });
     pptx.layout = 'CUSTOM';
+
+    const addLogo = (slide: ReturnType<typeof pptx.addSlide>) => {
+      if (logoData) {
+        slide.addImage({ data: logoData, x: 7.5, y: 6.6, w: 2, h: 0.46 });
+      }
+    };
 
     // Cover slide
     const cover = pptx.addSlide();
     cover.background = { color: '6B1E2E' };
     cover.addText(quickProgramme.toUpperCase(), { x: 0.8, y: 1, w: 8.4, h: 0.5, fontSize: 12, color: 'D4614A', fontFace: 'Arial', bold: true });
     cover.addText(quickTitle, { x: 0.8, y: 2, w: 8.4, h: 2, fontSize: 32, color: 'FFFFFF', fontFace: 'Arial', bold: true });
-    cover.addText('EDHEC Business School', { x: 0.8, y: 6.2, w: 8.4, h: 0.5, fontSize: 10, color: 'FFFFFF', fontFace: 'Arial' });
+    addLogo(cover);
 
     // Content slides from key points
     const points = quickKeyPoints.split('\n').filter(p => p.trim());
@@ -126,21 +160,29 @@ export default function Visuals() {
       slide.addText(`${i + 1}.`, { x: 0.8, y: 0.8, w: 1, h: 0.8, fontSize: 36, color: 'D4614A', fontFace: 'Arial', bold: true });
       slide.addText(points[i].trim(), { x: 0.8, y: 2, w: 8.4, h: 3, fontSize: 20, color: '1A1F3C', fontFace: 'Arial' });
       slide.addText(`${i + 2} / ${points.length + 2}`, { x: 8, y: 6.5, w: 1.5, h: 0.5, fontSize: 9, color: '999999', fontFace: 'Arial', align: 'right' });
+      addLogo(slide);
     }
 
     // Closing slide
     const closing = pptx.addSlide();
     closing.background = { color: '1A1F3C' };
     closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 2.5, w: 8.4, h: 1.5, fontSize: 24, color: 'FFFFFF', fontFace: 'Arial', bold: true, align: 'center' });
-    closing.addText('EDHEC Business School', { x: 0.8, y: 4.2, w: 8.4, h: 0.5, fontSize: 14, color: 'D4614A', fontFace: 'Arial', align: 'center' });
+    addLogo(closing);
 
     await pptx.writeFile({ fileName: `HIT-Visual-${Date.now()}.pptx` });
   };
 
   const exportPptxCustom = async () => {
+    const logoData = await fetchLogoBase64();
     const pptx = new PptxGenJS();
     pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 7.5 });
     pptx.layout = 'CUSTOM';
+
+    const addLogo = (s: ReturnType<typeof pptx.addSlide>) => {
+      if (logoData) {
+        s.addImage({ data: logoData, x: 7.5, y: 6.6, w: 2, h: 0.46 });
+      }
+    };
 
     const bgMap: Record<string, string> = {
       bordeaux: '6B1E2E',
@@ -180,6 +222,7 @@ export default function Visuals() {
           s.addText(slide.body, { x: 0.8, y: 2.6, w: 8.4, h: 3.5, fontSize: 14, color: tc, fontFace: 'Arial' });
         }
       }
+      addLogo(s);
     }
 
     await pptx.writeFile({ fileName: `HIT-Custom-Visual-${Date.now()}.pptx` });
@@ -683,7 +726,7 @@ export default function Visuals() {
                   )}
                 >
                   <div className="flex justify-between items-start">
-                    {slide.elements.logo && <div className={cn("w-4 h-4 rounded-sm opacity-50", slide.background === 'bordeaux' ? 'bg-white' : 'bg-brand-bordeaux')} />}
+                    {slide.elements.logo && <img src={EDHEC_LOGO_PATH} alt="" className="w-6 h-4 object-contain opacity-60" />}
                     <span className="text-[8px] opacity-30 font-bold">#{index + 1}</span>
                   </div>
                   

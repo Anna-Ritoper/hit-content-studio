@@ -3,6 +3,7 @@
 
 import { Timestamp } from 'firebase/firestore';
 import { CalendarEntry, Draft } from './types';
+import { edhecLogoSvgGroup } from './edhecLogo';
 
 // ── localStorage helpers ──
 
@@ -75,9 +76,8 @@ export const DEMO_SVG = `<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2
   <text x="770" y="790" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="14" fill="#555">de leur sante</text>
   <!-- Source -->
   <text x="80" y="1010" font-family="DM Sans, sans-serif" font-size="12" fill="#888">Source : Barometre Ipsos x EDHEC, 2026</text>
-  <!-- EDHEC branding -->
-  <text x="960" y="1000" text-anchor="end" font-family="Playfair Display, serif" font-size="18" fill="#6B1E2E" font-weight="bold">EDHEC</text>
-  <text x="960" y="1020" text-anchor="end" font-family="DM Sans, sans-serif" font-size="11" fill="#6B1E2E">Business School</text>
+  <!-- EDHEC logo (bottom right) -->
+  ${edhecLogoSvgGroup(820, 960, 0.35)}
 </svg>`;
 
 // ── Calendar demo entries ──

@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { 
-  PenLine, 
-  Image as ImageIcon, 
-  Calendar as CalendarIcon, 
-  Users 
+import {
+  PenLine,
+  Image as ImageIcon,
+  Calendar as CalendarIcon,
+  Users
 } from 'lucide-react';
+import { EDHEC_LOGO_PATH } from '../edhecLogo';
 
 const modules = [
   {
@@ -53,14 +54,22 @@ export default function ModuleSelector() {
   return (
     <div className="min-h-screen bg-brand-warm-white flex flex-col items-center justify-center p-6 sm:p-12">
       <header className="mb-16 text-center">
-        <motion.h1 
+        <motion.img
+          src={EDHEC_LOGO_PATH}
+          alt="EDHEC Business School"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="h-14 mx-auto mb-8 object-contain"
+        />
+        <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-5xl font-headline text-brand-bordeaux italic mb-4"
         >
           Que souhaitez-vous faire ?
         </motion.h1>
-        <motion.div 
+        <motion.div
           initial={{ width: 0 }}
           animate={{ width: 80 }}
           transition={{ delay: 0.2, duration: 0.6 }}

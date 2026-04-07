@@ -16,6 +16,7 @@ import { auth, logOut } from '../firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { EDHEC_LOGO_PATH } from '../edhecLogo';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -48,12 +49,7 @@ export default function Sidebar() {
         to="/hub" 
         className="p-4 flex items-center h-16 border-b border-brand-bordeaux/5 overflow-hidden hover:bg-brand-bordeaux/5 transition-colors"
       >
-        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-          <svg viewBox="0 0 40 40" className="w-8 h-8 text-brand-bordeaux fill-current">
-            <path d="M20 0C8.954 0 0 8.954 0 20s8.954 20 20 20 20-8.954 20-20S31.046 0 20 0zm0 36c-8.837 0-16-7.163-16-16S11.163 4 20 4s16 7.163 16 16-7.163 16-16 16z"/>
-            <path d="M20 8c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S26.627 8 20 8zm0 20c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8z"/>
-          </svg>
-        </div>
+        <img src={EDHEC_LOGO_PATH} alt="EDHEC" className="flex-shrink-0 w-8 h-8 object-contain" />
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -63,10 +59,10 @@ export default function Sidebar() {
               className="ml-3 flex flex-col"
             >
               <span className="font-headline font-bold text-brand-bordeaux text-sm leading-tight">
-                EDHEC
+                HIT Content
               </span>
               <span className="text-[8px] font-body font-bold text-brand-navy/60 uppercase tracking-tighter leading-none">
-                Content Studio
+                Studio
               </span>
             </motion.div>
           )}
