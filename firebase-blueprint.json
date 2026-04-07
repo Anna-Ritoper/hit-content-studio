@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "voiceProfile": {
+      "title": "Voice Profile",
+      "description": "AI tone profile for a team member",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Full name" },
+        "role": { "type": "string", "description": "Professional role" },
+        "languages": { "type": "array", "items": { "type": "string" }, "description": "Languages (FR, EN)" },
+        "avatarColor": { "type": "string", "description": "Hex color code" },
+        "styleTags": { "type": "array", "items": { "type": "string" } },
+        "structurePattern": { "type": "array", "items": { "type": "string" } },
+        "formalityScore": { "type": "number" },
+        "emojiUsage": { "type": "string", "enum": ["none", "minimal", "moderate", "heavy"] },
+        "languageNotes": { "type": "string" },
+        "sampleSentence": { "type": "string" },
+        "systemPromptFragment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "role", "languages", "avatarColor"]
+    },
+    "calendarEntry": {
+      "title": "Calendar Entry",
+      "description": "Scheduled post in the editorial calendar",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date-time" },
+        "voiceProfileId": { "type": "string" },
+        "voiceName": { "type": "string" },
+        "platform": { "type": "string", "enum": ["LinkedIn", "WhatsApp"] },
+        "language": { "type": "string", "enum": ["FR", "EN", "FR+EN"] },
+        "theme": { "type": "string" },
+        "topic": { "type": "string" },
+        "status": { "type": "string", "enum": ["À rédiger", "Brouillon", "Prêt", "Publié"] },
+        "draftId": { "type": "string" },
+        "link": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["date", "voiceProfileId", "platform", "status"]
+    },
+    "draft": {
+      "title": "Draft",
+      "description": "Content draft for a post",
+      "type": "object",
+      "properties": {
+        "voiceProfileId": { "type": "string" },
+        "voiceName": { "type": "string" },
+        "platform": { "type": "string" },
+        "language": { "type": "string" },
+        "contentType": { "type": "string" },
+        "topic": { "type": "string" },
+        "stats": { "type": "string" },
+        "generatedText": { "type": "string" },
+        "editedText": { "type": "string" },
+        "status": { "type": "string" },
+        "calendarEntryId": { "type": "string" },
+        "visualSvg": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["voiceProfileId", "topic", "status"]
+    },
+    "hashtagSet": {
+      "title": "Hashtag Set",
+      "description": "Predefined hashtag set for content",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "hashtags": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["name", "hashtags"]
+    }
+  },
+  "firestore": {
+    "/voiceProfiles/{profileId}": {
+      "schema": "voiceProfile",
+      "description": "Collection of team member voice profiles"
+    },
+    "/calendarEntries/{entryId}": {
+      "schema": "calendarEntry",
+      "description": "Editorial calendar entries"
+    },
+    "/drafts/{draftId}": {
+      "schema": "draft",
+      "description": "Content drafts"
+    },
+    "/settings/{settingId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "anthropicKey": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Global application settings"
+    },
+    "/hashtagSets/{setId}": {
+      "schema": "hashtagSet",
+      "description": "Predefined hashtag sets"
+    }
+  }
+}

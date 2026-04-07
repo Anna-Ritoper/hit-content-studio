@@ -1,0 +1,239 @@
+import { SYSTEM_PROMPT_GUIDELINES, cleanGeneratedText } from "../constants";
+
+export const generatePost = async (params: {
+  voiceName: string;
+  systemPromptFragment: string;
+  platform: string;
+  contentType: string;
+  lengthTarget: string;
+  charLimit: number;
+  language: string;
+  topic: string;
+  stats: string;
+  link?: string;
+  cta?: string;
+  hashtags: string;
+  draftInput?: string;
+  mode: 'generate' | 'refine';
+  cible?: string;
+  additionalRules?: string;
+  onChunk?: (chunk: string) => void;
+}) => {
+  const cibleLine = params.cible ? `- Target audience (cible): ${params.cible}. Adapt vocabulary, depth, and tone to this audience.` : '';
+
+  const system = params.mode === 'generate'
+    ? `You are a content assistant for the EDHEC Management in Innovative Health Chair, a French business school research chair focused on healthcare innovation, digital health, and AI in healthcare.
+
+You are writing a ${params.platform} post on behalf of ${params.voiceName}. ${params.systemPromptFragment}
+
+${SYSTEM_PROMPT_GUIDELINES}
+${params.additionalRules || ''}
+
+Guidelines:
+- Match the language setting: ${params.language}
+- Content type is: ${params.contentType}
+- Target length: ${params.lengthTarget}
+- Character limit: ${params.charLimit} : stay under it
+${cibleLine}
+- If FR+EN: write the French version first, then "---" as separator, then the English version
+- Append these hashtags at the end: ${params.hashtags}
+
+The post is about: ${params.topic}
+Key data points to include: ${params.stats}
+Link to include: ${params.link || 'None'}
+Desired CTA: ${params.cta || 'None'}
+
+Write the post now. No preamble, no explanation. Just the post.`
+    : `You are a content assistant for the EDHEC Management in Innovative Health Chair.
+
+You are refining a draft ${params.platform} post to be published on behalf of ${params.voiceName}. ${params.systemPromptFragment}
+
+${SYSTEM_PROMPT_GUIDELINES}
+${params.additionalRules || ''}
+
+The user has provided a rough draft or idea below. Rewrite it fully in ${params.voiceName}'s voice while preserving their core intent, key facts, and any specific phrases they clearly want to keep.
+
+Guidelines:
+- Match the language setting: ${params.language}
+- Target length: ${params.lengthTarget}
+- Character limit: ${params.charLimit} : stay under it
+${cibleLine}
+- Append these hashtags at the end: ${params.hashtags}
+
+User's draft / idea:
+${params.draftInput}
+
+Rewrite this now. No preamble, no explanation. Just the rewritten post.`;
+
+  const userMessage = params.mode === 'generate' ? `Topic: ${params.topic}` : `Draft: ${params.draftInput}`;
+
+  if (params.onChunk) {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system, userMessage, stream: true }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const data = JSON.parse(line.slice(6));
+            fullText += data.text;
+            params.onChunk(data.text);
+          } catch {
+            // skip malformed lines
+          }
+        }
+      }
+    }
+
+    return cleanGeneratedText(fullText);
+  } else {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system, userMessage, stream: false }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
+    }
+
+    const data = await res.json();
+    const text = data.content[0]?.text || '';
+    return cleanGeneratedText(text);
+  }
+};
+
+export const analyseTone = async (params: {
+  posts?: string[];
+  images?: { data: string; mimeType: string }[];
+}) => {
+  const systemInstruction = `You are a writing style analyst. Analyse the provided LinkedIn posts (either as text or images) and return a JSON object with these exact fields:
+- styleTags: array of 4-6 short style descriptors (e.g. 'Data-driven', 'Conversational', 'Strategic', 'Personal', 'Provocative', 'Empathetic')
+- structurePattern: array of 3-5 steps describing their typical post structure (e.g. ['Hook with stat', 'Context', 'Insight', 'CTA'])
+- formalityScore: number 1-10 (1=very casual, 10=very formal)
+- emojiUsage: 'none' | 'minimal' | 'moderate' | 'heavy'
+- languageNotes: string describing specific vocabulary tendencies, sentence length, paragraph style (max 2 sentences)
+- sampleSentence: a single example sentence written in this person's voice on the topic of healthcare innovation
+- systemPromptFragment: a 3-4 sentence description of this person's voice suitable for injecting into an AI writing prompt
+
+IMPORTANT: If images are provided, read the text from the screenshots first, then perform the analysis. Return ONLY the JSON object.`;
+
+  const content: any[] = [];
+
+  if (params.posts && params.posts.length > 0) {
+    content.push({
+      type: 'text',
+      text: `Analyze the tone from these text posts:\n\n${params.posts.join("\n\n---\n\n")}`
+    });
+  }
+
+  if (params.images && params.images.length > 0) {
+    params.images.forEach((img, idx) => {
+      content.push({
+        type: 'text',
+        text: `Post Screenshot #${idx + 1}:`
+      });
+      content.push({
+        type: 'image',
+        source: {
+          type: 'base64',
+          media_type: img.mimeType,
+          data: img.data,
+        },
+      });
+    });
+  }
+
+  const res = await fetch('/api/tone', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: systemInstruction, content }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Server error');
+  }
+
+  const data = await res.json();
+  const responseContent = data.content[0];
+  if (responseContent.type === 'text') {
+    const jsonMatch = responseContent.text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return JSON.parse(responseContent.text);
+  }
+  throw new Error("Unexpected response format");
+};
+
+export const generateVisualSvg = async (params: {
+  categoryLabel: string;
+  headline: string;
+  subtitle: string;
+  statsArray: string;
+  aspectRatio: '1:1' | '4:5' | '9:16';
+  additionalRules?: string;
+}) => {
+  const viewBox = params.aspectRatio === '1:1' ? "0 0 1080 1080" : params.aspectRatio === '4:5' ? "0 0 1080 1350" : "0 0 1080 1920";
+
+  const prompt = `Generate a complete, valid SVG infographic (viewBox="${viewBox}") using the EDHEC Management in Innovative Health visual identity.
+
+Design rules:
+- Background: #FAF8F4 (warm off-white)
+- Primary heading font: Playfair Display, color #6B1E2E (bordeaux)
+- Body font: DM Sans
+- Accent colors: coral #D4614A and teal #2A7D6B
+- Corner brackets: thin 2px bordeaux lines in top-left and bottom-right corners (decorative, 40px length)
+- EDHEC branding: bottom right, "EDHEC" text in Playfair Display #6B1E2E with subtitle "Business School"
+- Source attribution: bottom left, small DM Sans, color #888
+
+${SYSTEM_PROMPT_GUIDELINES}
+${params.additionalRules || ''}
+
+Content to include:
+- Category label: "${params.categoryLabel}" : small caps, coral, DM Sans, 13px
+- Main headline: "${params.headline}" : Playfair Display, bordeaux, 42px, max 2 lines
+- Subtitle: "${params.subtitle}" : DM Sans, #555, 18px
+- Stats/data callouts: ${params.statsArray} : display as large bold Playfair Display numerals (80px) with labels below in DM Sans 14px. Use coral for one set, teal for another.
+- If comparative bar chart data: render horizontal bars, coral for first group, teal for second
+- CTA bar (if event/webinar type): full-width dark navy (#1A1F3C) rectangle at bottom, white text, event date prominent
+- Generous white space throughout : nothing cramped
+
+Generate clean, valid, complete SVG code only. No explanation. The SVG must render perfectly.`;
+
+  const res = await fetch('/api/visual', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Server error');
+  }
+
+  const data = await res.json();
+  const content = data.content[0];
+  if (content.type === 'text') {
+    return content.text;
+  }
+  throw new Error("Unexpected response format");
+};

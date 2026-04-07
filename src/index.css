@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Playfair Display", serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-poppins: "Poppins", sans-serif;
+
+  --color-brand-bordeaux: #6B1E2E;
+  --color-brand-coral: #D4614A;
+  --color-brand-teal: #2A7D6B;
+  --color-brand-navy: #1A1F3C;
+  --color-brand-warm-white: #FAF8F4;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-warm-white text-brand-navy font-body;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-white border border-brand-bordeaux/10 rounded-xl shadow-sm p-6;
+  }
+
+  .btn-primary {
+    @apply bg-brand-bordeaux text-white font-headline px-6 py-3 rounded-lg hover:bg-brand-bordeaux/90 transition-colors disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply bg-brand-teal text-white font-headline px-6 py-3 rounded-lg hover:bg-brand-teal/90 transition-colors disabled:opacity-50;
+  }
+
+  .input-label {
+    @apply block text-[10px] uppercase tracking-widest font-bold text-brand-bordeaux mb-1;
+  }
+
+  .input-field {
+    @apply w-full bg-white border border-brand-bordeaux/20 rounded-lg px-4 py-2 focus:outline-none focus:border-brand-bordeaux transition-colors;
+  }
+
+  .animate-splash-bg {
+    background: linear-gradient(135deg, #5B1020, #6B1E2E, #8B2E3E, #6B1E2E, #5B1020);
+    background-size: 400% 400%;
+    animation: gradientMove 8s ease infinite;
+  }
+
+  .animate-title-glow {
+    animation: titleGlow 3s infinite;
+  }
+
+  .blob {
+    @apply absolute rounded-full mix-blend-screen pointer-events-none;
+    filter: blur(80px);
+  }
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 0 20px rgba(224, 112, 101, 0.3); }
+  50% { text-shadow: 0 0 40px rgba(224, 112, 101, 0.6); }
+}
+
+@keyframes float1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  25% { transform: translate(100px, -50px) scale(1.1); }
+  50% { transform: translate(50px, 100px) scale(0.9); }
+  75% { transform: translate(-50px, 50px) scale(1.05); }
+}
+
+@keyframes float2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1.1); }
+  33% { transform: translate(-80px, 60px) scale(0.9); }
+  66% { transform: translate(40px, -100px) scale(1); }
+}
+
+@keyframes float3 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-120px, -80px) scale(1.2); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes subtitleFade1 {
+  0%, 37.5% { opacity: 0.85; }
+  43.75%, 93.75% { opacity: 0; }
+  100% { opacity: 0.85; }
+}
+
+@keyframes subtitleFade2 {
+  0%, 43.75% { opacity: 0; }
+  50%, 87.5% { opacity: 0.85; }
+  93.75%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
+}
+
+.animate-subtitle-1 {
+  animation: subtitleFade1 8s ease-in-out infinite;
+}
+
+.animate-subtitle-2 {
+  animation: subtitleFade2 8s ease-in-out infinite;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;700&family=Poppins:wght@300;400;500&display=swap');
