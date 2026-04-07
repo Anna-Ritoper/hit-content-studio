@@ -26,6 +26,40 @@
 - [x] vercel.json created with rewrites for API and SPA routing
 - [x] .gitignore verified (includes node_modules, dist, .env)
 
+## Phase 4: Production Bug Fix
+- [x] Fix vercel.json: removed conflicting `/api/(.*)` rewrite that blocked Vercel serverless function routing
+- [x] Add `functions` config with `maxDuration: 60` for API endpoints
+- [x] Improve api/generate.ts: added X-Accel-Buffering header, error handling for mid-stream failures
+- [x] Improve aiService.ts: added content-type check, SSE error event handling, non-streaming fallback
+- [x] Improve Generate.tsx: error messages now visible in output area
+- [x] Push to GitHub (commit 4cc81aa)
+
+## End-to-End Test Results (April 7, 2026)
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Splash screen | PASS | Typing animation, blob effects, click-to-enter all work |
+| Module selector (/hub) | PASS | Content Studio tile renders, navigates to /generate |
+| Sidebar navigation | PASS | All 7 links work: Generate, Visuals, Voices, Calendar, Style Guide, Library, Settings |
+| Firebase Auth | PASS | Google sign-in works, Anna Ritoper shown as ADMIN |
+| Generate: UI | PASS | Voice selector, mode toggle, topic/stats/draft inputs, content types (incl. Newsletter), Cible pills, language/platform/hashtags all render |
+| Generate: API call | PASS | /api/generate returns 200, SSE streaming connects |
+| Generate: AI output | BLOCKED | Anthropic API key has zero credits ("credit balance is too low"). Fix: top up credits at console.anthropic.com |
+| Refine draft mode | PASS (UI) | Mode toggle, draft textarea render. Blocked by same API credits issue |
+| Visual Studio | PASS (UI) | Mode rapide/personnalise, format/style dropdowns, titre/points fields render. PPTX export UI present |
+| Visual: AI generation | BLOCKED | Same API credits issue |
+| Voices page | PASS | Simone Whale profile with tags, "+" to add voice, tone profile builder shown |
+| Voice Creator: AI tone | BLOCKED | Same API credits issue |
+| Calendar | PASS (UI) | April 2026 grid, today highlighted, Add Post button, month navigation |
+| Calendar: Firestore | PARTIAL | Firebase permissions error on style rules fetch (non-blocking, falls back to hardcoded rules) |
+| Draft Library | PASS | Empty state with search bar, "No drafts yet" message |
+| Style Guide | PASS | All 6 hardcoded rules display correctly |
+| Settings | PASS | Account (admin badge), Hashtag Manager, API Configuration ("managed server-side"), health check returns ok |
+| /api/health | PASS | Returns {"status":"ok"} (key is configured) |
+| SPA routing | PASS | All routes work, no 404s on direct navigation |
+
+## Blocking Issue
+The Anthropic API key on Vercel has no credits. All AI features (Generate, Refine, Visual, Voice Creator) return: "Your credit balance is too low to access the Anthropic API." This is a billing issue, not a code bug. Fix: go to console.anthropic.com and add credits to the account.
+
 ## Final Verification (all pass)
 1. `npx tsc --noEmit` : PASS
 2. `npm run build` : PASS
