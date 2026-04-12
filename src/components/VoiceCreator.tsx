@@ -113,7 +113,7 @@ export default function VoiceCreator({ onClose, onSuccess }: VoiceCreatorProps) 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="font-headline text-3xl text-brand-bordeaux italic">Create Voice</h2>
+        <h2 className="font-headline text-3xl font-bold text-brand-bordeaux">Create Voice</h2>
         <button onClick={onClose} className="p-2 hover:bg-brand-navy/5 rounded-full text-brand-navy/40">
           <CloseIcon className="w-6 h-6" />
         </button>

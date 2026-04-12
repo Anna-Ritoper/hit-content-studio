@@ -66,12 +66,13 @@ export default function Voices() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-12">
+    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-12" data-tour="module-voices">
       {/* Left Side - List */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="font-headline text-2xl text-brand-bordeaux">Voices</h2>
-          <button 
+          <h2 className="font-headline text-2xl font-bold text-brand-bordeaux">Voices</h2>
+          <button
+            data-tour="voices-create"
             onClick={() => setIsCreating(true)}
             className="p-2 bg-brand-bordeaux text-white rounded-full hover:bg-brand-bordeaux/90 transition-all"
           >

@@ -142,7 +142,7 @@ export default function StyleGuide() {
   return (
     <div className="max-w-7xl mx-auto space-y-12">
       <header>
-        <h1 className="font-headline text-4xl text-brand-bordeaux italic mb-2">Style Guide</h1>
+        <h1 className="font-headline text-4xl font-bold text-brand-bordeaux mb-2">Style Guide</h1>
         <p className="font-body text-brand-navy/60">Règles appliquées à tous les contenus générés</p>
       </header>
 
@@ -215,7 +215,7 @@ export default function StyleGuide() {
                 <CloseIcon className="w-5 h-5" />
               </button>
 
-              <h2 className="font-headline text-2xl text-brand-bordeaux italic mb-6">
+              <h2 className="font-headline text-2xl font-bold text-brand-bordeaux mb-6">
                 {editingRule ? 'Modifier la règle' : 'Nouvelle règle'}
               </h2>
 

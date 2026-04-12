@@ -65,7 +65,7 @@ export default function ModuleSelector() {
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-4xl md:text-5xl font-headline text-brand-bordeaux italic mb-4"
+          className="text-4xl md:text-5xl font-headline font-bold text-brand-bordeaux mb-4"
         >
           Que souhaitez-vous faire ?
         </motion.h1>

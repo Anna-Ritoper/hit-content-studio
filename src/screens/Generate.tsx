@@ -21,7 +21,6 @@ import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible }
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
 import { generatePost, generateVisualSvg } from '../services/aiService';
 import VoiceCreator from '../components/VoiceCreator';
-import Tutorial from '../components/Tutorial';
 import { clsx, type ClassValue } from 'clsx';
 import html2canvas from 'html2canvas';
 import { twMerge } from 'tailwind-merge';
@@ -175,10 +174,9 @@ export default function Generate() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <Tutorial run />
+    <div className="max-w-7xl mx-auto" data-tour="module-content">
       {/* Voice Profile Selector */}
-      <div className="mb-12 bg-white rounded-2xl p-6 border border-brand-bordeaux/5 shadow-sm">
+      <div data-tour="voice-selector" className="mb-12 bg-white rounded-2xl p-6 border border-brand-bordeaux/5 shadow-sm">
         <label className="text-[10px] font-bold text-brand-coral uppercase tracking-[0.2em] mb-4 block">Posting As</label>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-3">
@@ -209,7 +207,7 @@ export default function Generate() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-2 pl-6 border-l border-brand-bordeaux/10"
             >
-              <span className="font-headline text-2xl text-brand-bordeaux italic">
+              <span className="font-headline text-2xl text-brand-bordeaux font-bold">
                 {selectedVoice.name.charAt(0)} | {selectedVoice.name},
               </span>
               <span className="text-xs text-brand-navy/40 font-medium mt-1">
@@ -221,7 +219,7 @@ export default function Generate() {
       </div>
 
       <header className="mb-8">
-        <h1 className="font-headline text-4xl text-brand-bordeaux italic">Craft your post.</h1>
+        <h1 className="font-headline text-4xl font-bold text-brand-bordeaux">Craft your post.</h1>
         <p className="font-body text-brand-navy/60 mt-2">Craft content for the EDHEC Management in Innovative Health Chair.</p>
       </header>
 

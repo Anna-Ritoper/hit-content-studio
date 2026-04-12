@@ -130,7 +130,7 @@ export default function Splash() {
             <div className="relative flex flex-col items-center">
               {/* Main Title (EFFECT 1: Typing) */}
               <div className="flex items-center mb-4">
-                <h1 className="text-6xl md:text-8xl font-headline text-white italic animate-title-glow">
+                <h1 className="text-6xl md:text-8xl font-headline font-bold text-white animate-title-glow">
                   {displayText}
                   {showCursor && (
                     <span className="inline-block w-1 h-12 md:h-20 bg-white ml-2 animate-blink">|</span>

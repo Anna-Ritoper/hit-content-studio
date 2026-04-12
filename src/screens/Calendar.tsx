@@ -229,7 +229,7 @@ export default function Calendar() {
   const selectedDayEntries = selectedDay ? getEntriesForDay(selectedDay) : [];
 
   return (
-    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12">
+    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-12" data-tour="module-calendar">
       {/* Main Calendar */}
       <div>
         <div className="flex items-center justify-between mb-8">
@@ -241,6 +241,7 @@ export default function Calendar() {
             </div>
           </div>
           <button
+            data-tour="calendar-add"
             onClick={() => openCreateForm()}
             className="btn-primary flex items-center gap-2 py-2"
           >
@@ -309,7 +310,7 @@ export default function Calendar() {
       {/* Sidebar: selected day entries */}
       <div className="space-y-8">
         <section>
-          <h3 className="font-headline text-2xl text-brand-bordeaux italic mb-6">
+          <h3 className="font-headline text-2xl font-bold text-brand-bordeaux mb-6">
             {selectedDay ? format(selectedDay, 'EEEE d MMMM') : 'Select a day'}
           </h3>
 

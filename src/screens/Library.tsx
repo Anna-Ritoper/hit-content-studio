@@ -135,19 +135,19 @@ export default function Library() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto" data-tour="module-library">
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <span className="text-[10px] font-bold text-brand-bordeaux uppercase tracking-[0.2em] mb-2 block">Repository</span>
-          <h1 className="font-headline text-5xl text-brand-bordeaux">Draft Library</h1>
-          <p className="font-body text-brand-navy/60 mt-4 italic text-lg max-w-2xl">
+          <h1 className="font-headline font-bold text-5xl text-brand-bordeaux">Draft Library</h1>
+          <p className="font-body text-brand-navy/60 mt-4 text-lg max-w-2xl">
             Manage and refine your drafted content. A repository of posts ready for publication.
           </p>
         </div>
       </header>
 
       <div className="mb-10 flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
+        <div data-tour="library-search" className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-navy/20" />
           <input
             type="text"

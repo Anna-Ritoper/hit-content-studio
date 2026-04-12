@@ -3,6 +3,7 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, signIn } from '../firebase';
 import Sidebar from './Sidebar';
+import Tutorial from './Tutorial';
 import { motion, AnimatePresence } from 'motion/react';
 import { HelpCircle, X } from 'lucide-react';
 import { isDemoMode, setDemoMode } from '../demoData';
@@ -45,7 +46,7 @@ function GuideModal({ onClose }: { onClose: () => void }) {
       >
         {/* Header */}
         <div className="bg-brand-bordeaux px-8 py-6 flex items-center justify-between">
-          <h2 className="font-headline text-2xl text-white italic">HIT Content Studio</h2>
+          <h2 className="font-headline text-2xl text-white font-bold">HIT Content Studio</h2>
           <button
             onClick={handleClose}
             className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-all"
@@ -153,6 +154,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-brand-warm-white flex">
+      <Tutorial />
       <Sidebar />
       <main className="flex-1 ml-[64px] p-8">
         {/* Top-right controls: Guide + Demo Mode */}

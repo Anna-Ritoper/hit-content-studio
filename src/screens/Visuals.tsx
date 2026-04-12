@@ -305,15 +305,15 @@ export default function Visuals() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-20 px-4">
+    <div className="max-w-6xl mx-auto pb-20 px-4" data-tour="module-visuals">
       <header className="mb-8">
-        <h1 className="text-4xl font-headline text-brand-bordeaux italic mb-2">Visual Studio</h1>
+        <h1 className="text-4xl font-headline font-bold text-brand-bordeaux mb-2">Visual Studio</h1>
         <p className="text-brand-navy/60">Créez des visuels pour vos publications</p>
       </header>
 
       {/* Mode Toggle */}
       <div className="flex justify-center mb-12">
-        <div className="bg-brand-bordeaux/5 p-1 rounded-xl flex gap-1">
+        <div data-tour="visuals-mode-toggle" className="bg-brand-bordeaux/5 p-1 rounded-xl flex gap-1">
           <button
             onClick={() => setMode('quick')}
             className={cn(
@@ -466,7 +466,7 @@ export default function Visuals() {
           {/* Custom Builder */}
           <div className="space-y-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-headline text-brand-bordeaux italic">Construisez votre visuel slide par slide</h2>
+              <h2 className="text-2xl font-headline font-bold text-brand-bordeaux">Construisez votre visuel slide par slide</h2>
               <button
                 onClick={addSlide}
                 className="flex items-center gap-2 text-brand-bordeaux font-bold hover:underline"
