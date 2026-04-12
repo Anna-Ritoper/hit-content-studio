@@ -21,8 +21,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { db, auth } from '../firebase';
+import { db } from '../firebase';
 import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { StyleRule } from '../types';
 import { generateVisualSvg } from '../services/aiService';
@@ -82,7 +81,6 @@ interface Slide {
 }
 
 export default function Visuals() {
-  const [user] = useAuthState(auth);
   const [mode, setMode] = useState<'quick' | 'custom'>('quick');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedSvg, setGeneratedSvg] = useState('');
@@ -230,7 +228,6 @@ export default function Visuals() {
 
   useEffect(() => {
     const fetchStyleRules = async () => {
-      if (!user) return;
       try {
         const q = query(collection(db, 'styleRules'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
@@ -242,7 +239,7 @@ export default function Visuals() {
       }
     };
     fetchStyleRules();
-  }, [user]);
+  }, []);
 
   const handleGenerateQuick = async (e: React.FormEvent) => {
     e.preventDefault();

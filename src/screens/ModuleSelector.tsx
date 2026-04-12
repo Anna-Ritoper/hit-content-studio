@@ -8,48 +8,18 @@ import {
   Users
 } from 'lucide-react';
 import { EDHEC_LOGO_PATH } from '../edhecLogo';
-
-const modules = [
-  {
-    id: 'content',
-    title: 'Content Studio',
-    description: 'Posts et newsletters',
-    icon: PenLine,
-    path: '/generate',
-    color: 'bg-[#FDF2F0]', // Light coral/salmon tint
-    iconColor: 'text-brand-coral',
-  },
-  {
-    id: 'visual',
-    title: 'Visual Studio',
-    description: 'Visuels et carrousels',
-    icon: ImageIcon,
-    path: '/visuals',
-    color: 'bg-[#F0F9F7]', // Light teal tint
-    iconColor: 'text-brand-teal',
-  },
-  {
-    id: 'calendar',
-    title: 'Calendrier',
-    description: 'Planifier vos publications',
-    icon: CalendarIcon,
-    path: '/calendar',
-    color: 'bg-[#F0F4F9]', // Light blue tint
-    iconColor: 'text-blue-600',
-  },
-  {
-    id: 'voices',
-    title: 'Voices',
-    description: 'Gérer les profils de ton',
-    icon: Users,
-    path: '/voices',
-    color: 'bg-[#FFF9F0]', // Light amber/gold tint
-    iconColor: 'text-amber-600',
-  },
-];
+import { useI18n } from '../i18n';
 
 export default function ModuleSelector() {
   const navigate = useNavigate();
+  const { t } = useI18n();
+
+  const modules = [
+    { id: 'content', title: t('hub.content.title'), description: t('hub.content.desc'), icon: PenLine, path: '/generate', iconColor: 'text-brand-bordeaux', topColor: '#6B1E2E' },
+    { id: 'visual', title: t('hub.visual.title'), description: t('hub.visual.desc'), icon: ImageIcon, path: '/visuals', iconColor: 'text-brand-coral', topColor: '#E07065' },
+    { id: 'calendar', title: t('hub.calendar.title'), description: t('hub.calendar.desc'), icon: CalendarIcon, path: '/calendar', iconColor: 'text-brand-teal', topColor: '#2A7D6B' },
+    { id: 'voices', title: t('hub.voices.title'), description: t('hub.voices.desc'), icon: Users, path: '/voices', iconColor: 'text-[#D4A017]', topColor: '#D4A017' },
+  ];
 
   return (
     <div className="min-h-screen bg-brand-warm-white flex flex-col items-center justify-center p-6 sm:p-12">
@@ -67,7 +37,7 @@ export default function ModuleSelector() {
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-5xl font-headline font-bold text-brand-bordeaux mb-4"
         >
-          Que souhaitez-vous faire ?
+          {t('hub.heading')}
         </motion.h1>
         <motion.div
           initial={{ width: 0 }}
@@ -85,9 +55,10 @@ export default function ModuleSelector() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.1 }}
             onClick={() => navigate(module.path)}
-            className={`group relative flex flex-col items-start p-8 md:p-10 rounded-3xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 text-left ${module.color} border border-transparent hover:border-brand-bordeaux/10`}
+            style={{ borderTopWidth: 3, borderTopColor: module.topColor }}
+            className="group relative flex flex-col items-start p-8 md:p-10 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all text-left"
           >
-            <div className={`p-4 rounded-2xl bg-white shadow-sm mb-6 group-hover:scale-110 transition-transform duration-300 ${module.iconColor}`}>
+            <div className={`p-4 rounded-2xl bg-brand-warm-white mb-6 group-hover:scale-110 transition-transform duration-300 ${module.iconColor}`}>
               <module.icon className="w-8 h-8" />
             </div>
             <h2 className="text-2xl font-headline text-brand-navy mb-2 group-hover:text-brand-bordeaux transition-colors">

@@ -10,9 +10,9 @@ import {
   X,
   ExternalLink
 } from 'lucide-react';
-import { db, auth } from '../firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy } from 'firebase/firestore';
+import { useI18n } from '../i18n';
 import { CalendarEntry, VoiceProfile, PostStatus, Platform, Language } from '../types';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, getDay } from 'date-fns';
 import { isDemoMode, DEMO_CALENDAR_ENTRIES } from '../demoData';
@@ -65,7 +65,7 @@ const EMPTY_FORM: EntryForm = {
 
 export default function Calendar() {
   const navigate = useNavigate();
-  const [user] = useAuthState(auth);
+  const { t, lang } = useI18n();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
   const [voices, setVoices] = useState<VoiceProfile[]>([]);
@@ -75,6 +75,7 @@ export default function Calendar() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<EntryForm>(EMPTY_FORM);
+  const [detailEntry, setDetailEntry] = useState<CalendarEntry | null>(null);
   const [demo, setDemo] = useState(isDemoMode());
 
   // Listen for demo mode changes
@@ -84,25 +85,22 @@ export default function Calendar() {
     return () => window.removeEventListener('demo-mode-change', handler);
   }, []);
 
-  useEffect(() => {
-    if (user) fetchData();
-  }, [user]);
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
-    const voicesSnap = await getDocs(collection(db, 'voiceProfiles'));
-    const voicesData = voicesSnap.docs.map(d => ({ id: d.id, ...d.data() } as VoiceProfile));
-    setVoices(voicesData);
+    try {
+      const voicesSnap = await getDocs(collection(db, 'voiceProfiles'));
+      const voicesData = voicesSnap.docs.map(d => ({ id: d.id, ...d.data() } as VoiceProfile));
+      setVoices(voicesData);
 
-    const entriesSnap = await getDocs(query(collection(db, 'calendarEntries'), orderBy('date', 'asc')));
-    const entriesData = entriesSnap.docs.map(d => ({
-      id: d.id,
-      ...d.data(),
-    } as CalendarEntry));
-    setEntries(entriesData);
-
-    const isAdmin = user?.email === 'anna.ritoper@gmail.com';
-    if (entriesData.length === 0 && isAdmin) {
-      await seedCalendar();
+      const entriesSnap = await getDocs(query(collection(db, 'calendarEntries'), orderBy('date', 'asc')));
+      const entriesData = entriesSnap.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+      } as CalendarEntry));
+      setEntries(entriesData);
+    } catch (e) {
+      console.error('calendar fetch failed', e);
     }
   };
 
@@ -280,12 +278,14 @@ export default function Calendar() {
                   {dayEntries.slice(0, 3).map(entry => (
                     <div
                       key={entry.id}
-                      className="flex items-center gap-1 group"
+                      title={entry.topic}
+                      onClick={(e) => { e.stopPropagation(); setDetailEntry(entry); }}
+                      className="flex items-center gap-1 group cursor-pointer"
                     >
                       <div
                         className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", STATUS_DOT[entry.status] || 'bg-brand-navy/20')}
                       />
-                      <span className="text-[9px] text-brand-navy/70 truncate leading-tight">{entry.topic}</span>
+                      <span className="text-[13px] text-brand-navy/80 truncate leading-tight">{entry.topic}</span>
                     </div>
                   ))}
                   {dayEntries.length > 3 && (
@@ -301,7 +301,7 @@ export default function Calendar() {
           {STATUS_OPTIONS.map(status => (
             <div key={status} className="flex items-center gap-2">
               <div className={cn("w-3 h-3 rounded-full", STATUS_DOT[status] || 'bg-brand-navy/20')} />
-              <span className="text-[10px] font-bold text-brand-navy/60 uppercase tracking-widest">{status}</span>
+              <span className="text-[10px] font-bold text-brand-navy/60 uppercase tracking-widest">{t(`status.${status}`)}</span>
             </div>
           ))}
         </div>
@@ -329,7 +329,7 @@ export default function Calendar() {
 
           <div className="space-y-4">
             {selectedDayEntries.map(entry => (
-              <div key={entry.id} className="card p-4 space-y-3 group">
+              <div key={entry.id} onClick={() => setDetailEntry(entry)} className="card p-4 space-y-3 group cursor-pointer">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div
@@ -341,33 +341,35 @@ export default function Calendar() {
                     <span className="text-[10px] font-bold text-brand-navy">{entry.voiceName}</span>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {entry.linkedinUrl && (
+                    {entry.linkedinUrl ? (
                       <a
                         href={entry.linkedinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 text-[#0A66C2] hover:bg-[#0A66C2]/10 rounded-md transition-all"
-                        title="Open LinkedIn post"
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-2 py-1 bg-[#0A66C2] text-white rounded-md text-[9px] font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-1"
+                        title={t('cal.openLinkedIn')}
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <ExternalLink className="w-3 h-3" /> {t('cal.linkedin')}
                       </a>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openEditForm(entry); }}
+                        className="px-2 py-1 border border-[#0A66C2]/40 text-[#0A66C2] rounded-md text-[9px] font-bold hover:bg-[#0A66C2]/5"
+                        title={t('cal.addLinkedIn')}
+                      >
+                        + {t('cal.addLinkedIn')}
+                      </button>
                     )}
                     <button
-                      onClick={() => openInGenerate(entry)}
-                      className="p-1.5 text-brand-teal hover:bg-brand-teal/10 rounded-md transition-all"
-                      title="Open in Generate"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => openEditForm(entry)}
+                      onClick={(e) => { e.stopPropagation(); openEditForm(entry); }}
                       className="p-1.5 text-brand-navy/40 hover:text-brand-bordeaux hover:bg-brand-bordeaux/5 rounded-md transition-all"
-                      title="Edit"
+                      title={t('cal.edit')}
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(entry.id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(entry.id); }}
                       className="p-1.5 text-brand-navy/40 hover:text-brand-coral hover:bg-brand-coral/5 rounded-md transition-all"
                       title="Delete"
                     >
@@ -384,6 +386,7 @@ export default function Calendar() {
                 <div className="flex items-center justify-between">
                   <select
                     value={entry.status}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={(e) => handleStatusChange(entry.id, e.target.value as PostStatus)}
                     className={cn(
                       "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight appearance-none cursor-pointer",
@@ -391,7 +394,7 @@ export default function Calendar() {
                     )}
                   >
                     {STATUS_OPTIONS.map(s => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>{t(`status.${s}`)}</option>
                     ))}
                   </select>
                   <span className="text-[10px] font-bold text-brand-coral uppercase tracking-widest">{entry.platform}</span>
@@ -401,6 +404,83 @@ export default function Calendar() {
           </div>
         </section>
       </div>
+
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {detailEntry && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDetailEntry(null)}
+              className="fixed inset-0 bg-brand-navy/20 backdrop-blur-sm z-[80]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl bg-white rounded-2xl shadow-2xl z-[90] p-8"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold"
+                    style={{ backgroundColor: detailEntry.avatarColor || '#6B1E2E' }}>
+                    {detailEntry.voiceName.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-headline text-lg text-brand-bordeaux font-bold">{detailEntry.voiceName}</p>
+                    <p className="text-[10px] text-brand-navy/50 uppercase tracking-widest">
+                      {format(detailEntry.date.toDate(), 'EEEE d MMMM yyyy')}
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setDetailEntry(null)} className="p-2 hover:bg-brand-navy/5 rounded-full text-brand-navy/40">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest",
+                    STATUS_STYLES[detailEntry.status] || 'bg-brand-navy/5 text-brand-navy/60'
+                  )}>{t(`status.${detailEntry.status}`)}</span>
+                  <span className="text-[10px] font-bold text-brand-coral uppercase tracking-widest">{detailEntry.platform}</span>
+                  <span className="text-[10px] text-brand-navy/40">{detailEntry.language}</span>
+                </div>
+                {detailEntry.theme && <p className="text-xs text-brand-navy/50">{detailEntry.theme}</p>}
+                <div>
+                  <label className="input-label">{t('cal.topic')}</label>
+                  <p className="text-sm text-brand-navy/80 whitespace-pre-wrap leading-relaxed">{detailEntry.topic}</p>
+                </div>
+                {detailEntry.linkedinUrl && (
+                  <div>
+                    <label className="input-label">LinkedIn</label>
+                    <a href={detailEntry.linkedinUrl} target="_blank" rel="noopener noreferrer"
+                       className="text-sm text-[#0A66C2] hover:underline break-all">{detailEntry.linkedinUrl}</a>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-brand-bordeaux/10">
+                {detailEntry.linkedinUrl && (
+                  <a href={detailEntry.linkedinUrl} target="_blank" rel="noopener noreferrer"
+                     className="px-4 py-2 bg-[#0A66C2] text-white rounded-lg text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                    <ExternalLink className="w-3 h-3" /> {t('cal.linkedin')}
+                  </a>
+                )}
+                <button
+                  onClick={() => { const e = detailEntry; setDetailEntry(null); openEditForm(e); }}
+                  className="btn-primary py-2 flex items-center gap-2"
+                >
+                  <Pencil className="w-3 h-3" /> {t('cal.edit')}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Create/Edit Modal */}
       <AnimatePresence>

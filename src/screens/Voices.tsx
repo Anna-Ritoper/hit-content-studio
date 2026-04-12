@@ -14,8 +14,7 @@ import {
   X as CloseIcon,
   RotateCcw
 } from 'lucide-react';
-import { db, auth } from '../firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { VoiceProfile, Language, EmojiUsage } from '../types';
 import { SIMONE_WHALE_DEFAULT } from '../constants';
@@ -40,30 +39,46 @@ const PRESET_COLORS = [
 ];
 
 export default function Voices() {
-  const [user] = useAuthState(auth);
   const [voices, setVoices] = useState<VoiceProfile[]>([SIMONE_WHALE_DEFAULT]);
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchVoices();
-    }
-  }, [user]);
+  useEffect(() => { fetchVoices(); }, []);
 
   const fetchVoices = async () => {
-    const q = query(collection(db, 'voiceProfiles'));
-    const querySnapshot = await getDocs(q);
-    const voicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VoiceProfile));
-    setVoices(voicesData);
-
-    // Seed Simone if empty and user is admin
-    const isAdmin = user?.email === 'anna.ritoper@gmail.com';
-    if (voicesData.length === 0 && isAdmin) {
-      const { id, ...simoneData } = SIMONE_WHALE_DEFAULT;
-      await addDoc(collection(db, 'voiceProfiles'), simoneData);
-      fetchVoices();
+    try {
+      const q = query(collection(db, 'voiceProfiles'));
+      const querySnapshot = await getDocs(q);
+      const voicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VoiceProfile));
+      if (voicesData.length > 0) setVoices(voicesData);
+    } catch (e) {
+      console.error('fetch voices failed', e);
     }
   };
+
+  const LS_KEY = 'hit-voice-photos';
+  const getLocalPhotos = (): Record<string, string> => {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
+  };
+  const setLocalPhoto = (id: string, dataUrl: string) => {
+    const map = getLocalPhotos();
+    map[id] = dataUrl;
+    try { localStorage.setItem(LS_KEY, JSON.stringify(map)); } catch {}
+    setVoices(vs => vs.map(v => v.id === id ? { ...v, avatarPhoto: dataUrl } : v));
+  };
+  const handlePhotoUpload = (voiceId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => setLocalPhoto(voiceId, reader.result as string);
+    reader.readAsDataURL(file);
+  };
+  // Hydrate photos from localStorage on first mount
+  useEffect(() => {
+    const map = getLocalPhotos();
+    if (Object.keys(map).length === 0) return;
+    setVoices(vs => vs.map(v => map[v.id] ? { ...v, avatarPhoto: map[v.id] } : v));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voices.length]);
 
   return (
     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-12" data-tour="module-voices">
@@ -84,11 +99,15 @@ export default function Voices() {
           {voices.map(voice => (
             <div key={voice.id} className="card p-4 hover:border-brand-bordeaux/30 transition-all group">
               <div className="flex items-center gap-3 mb-3">
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-headline font-bold"
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-headline font-bold overflow-hidden"
                   style={{ backgroundColor: voice.avatarColor }}
                 >
-                  {voice.name.charAt(0)}
+                  {voice.avatarPhoto ? (
+                    <img src={voice.avatarPhoto} alt={voice.name} className="w-full h-full object-cover" />
+                  ) : (
+                    voice.name.charAt(0)
+                  )}
                 </div>
                 <div className="overflow-hidden">
                   <p className="font-bold text-sm truncate">{voice.name}</p>
@@ -109,6 +128,10 @@ export default function Voices() {
                   ))}
                 </div>
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                  <label className="text-brand-navy/40 hover:text-brand-bordeaux cursor-pointer" title="Upload photo">
+                    <Upload className="w-3 h-3" />
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(voice.id, e)} />
+                  </label>
                   <button className="text-brand-navy/40 hover:text-brand-bordeaux"><Edit3 className="w-3 h-3" /></button>
                   <button className="text-brand-navy/40 hover:text-brand-coral"><Trash2 className="w-3 h-3" /></button>
                 </div>

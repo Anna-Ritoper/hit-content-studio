@@ -23,6 +23,7 @@ export interface VoiceProfile {
   role: string;
   languages: Language[];
   avatarColor: string;
+  avatarPhoto?: string; // base64 data URL
   styleTags: string[];
   structurePattern: string[];
   formalityScore: number;

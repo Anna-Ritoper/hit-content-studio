@@ -14,8 +14,7 @@ import {
   Plus,
   X
 } from 'lucide-react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { db, auth } from '../firebase';
+import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible } from '../types';
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
@@ -31,7 +30,6 @@ function cn(...inputs: ClassValue[]) {
 
 export default function Generate() {
   const navigate = useNavigate();
-  const [user] = useAuthState(auth);
   const [mode, setMode] = useState<'generate' | 'refine'>('generate');
   const [topic, setTopic] = useState('');
   const [stats, setStats] = useState('');
@@ -54,29 +52,25 @@ export default function Generate() {
 
   useEffect(() => {
     const fetchVoices = async () => {
-      if (!user) return;
-      const q = query(collection(db, 'voiceProfiles'));
-      const querySnapshot = await getDocs(q);
-      let voicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VoiceProfile));
-      
-      const isAdmin = user?.email === 'anna.ritoper@gmail.com';
-      if (voicesData.length === 0 && isAdmin) {
-        const { id, ...simoneData } = SIMONE_WHALE_DEFAULT;
-        const docRef = await addDoc(collection(db, 'voiceProfiles'), simoneData);
-        voicesData = [{ id: docRef.id, ...simoneData } as VoiceProfile];
-      }
-      
-      setVoices(voicesData);
-      if (voicesData.length > 0 && (!selectedVoice || selectedVoice.id === 'simone-whale-default')) {
-        setSelectedVoice(voicesData[0]);
+      try {
+        const q = query(collection(db, 'voiceProfiles'));
+        const querySnapshot = await getDocs(q);
+        const voicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VoiceProfile));
+        if (voicesData.length > 0) {
+          setVoices(voicesData);
+          if (!selectedVoice || selectedVoice.id === 'simone-whale-default') {
+            setSelectedVoice(voicesData[0]);
+          }
+        }
+      } catch (e) {
+        console.error('fetch voices failed', e);
       }
     };
     fetchVoices();
-  }, [user]);
+  }, []);
 
   useEffect(() => {
     const fetchStyleRules = async () => {
-      if (!user) return;
       try {
         const q = query(collection(db, 'styleRules'), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
@@ -88,7 +82,7 @@ export default function Generate() {
       }
     };
     fetchStyleRules();
-  }, [user]);
+  }, []);
 
   const handleGenerate = async () => {
     if (!selectedVoice) return;
@@ -185,32 +179,36 @@ export default function Generate() {
                 key={voice.id}
                 onClick={() => setSelectedVoice(voice)}
                 className={cn(
-                  "relative w-12 h-12 rounded-full flex items-center justify-center text-white font-headline font-bold transition-all",
-                  selectedVoice?.id === voice.id ? "ring-4 ring-brand-bordeaux ring-offset-2 scale-110" : "opacity-60 hover:opacity-100"
+                  "relative w-9 h-9 rounded-full flex items-center justify-center text-white font-headline font-bold text-sm overflow-hidden transition-all",
+                  selectedVoice?.id === voice.id ? "ring-2 ring-brand-bordeaux ring-offset-2" : "opacity-60 hover:opacity-100"
                 )}
                 style={{ backgroundColor: voice.avatarColor }}
               >
-                {voice.name.charAt(0)}
+                {voice.avatarPhoto ? (
+                  <img src={voice.avatarPhoto} alt={voice.name} className="w-full h-full object-cover" />
+                ) : (
+                  voice.name.charAt(0)
+                )}
               </button>
             ))}
-            <button 
+            <button
               onClick={() => setIsVoiceCreatorOpen(true)}
-              className="w-12 h-12 rounded-full border-2 border-dashed border-brand-bordeaux/20 flex items-center justify-center text-brand-bordeaux/40 hover:text-brand-bordeaux hover:border-brand-bordeaux/40 transition-all"
+              className="w-9 h-9 rounded-full border-2 border-dashed border-brand-bordeaux/20 flex items-center justify-center text-brand-bordeaux/40 hover:text-brand-bordeaux hover:border-brand-bordeaux/40 transition-all"
             >
-              <Plus className="w-6 h-6" />
+              <Plus className="w-4 h-4" />
             </button>
           </div>
 
           {selectedVoice && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-2 pl-6 border-l border-brand-bordeaux/10"
+              className="flex flex-col pl-6 border-l border-brand-bordeaux/10"
             >
-              <span className="font-headline text-2xl text-brand-bordeaux font-bold">
-                {selectedVoice.name.charAt(0)} | {selectedVoice.name},
+              <span className="font-headline text-base text-brand-bordeaux font-bold leading-tight">
+                {selectedVoice.name}
               </span>
-              <span className="text-xs text-brand-navy/40 font-medium mt-1">
+              <span className="text-xs text-brand-navy/50 font-medium">
                 {selectedVoice.role}
               </span>
             </motion.div>

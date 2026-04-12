@@ -9,9 +9,9 @@ import {
   AlertCircle,
   BookOpen
 } from 'lucide-react';
-import { db, auth } from '../firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { 
+import { db } from '../firebase';
+import { useI18n } from '../i18n';
+import {
   collection, 
   query, 
   getDocs, 
@@ -34,7 +34,7 @@ function cn(...inputs: ClassValue[]) {
 const CATEGORIES: StyleCategory[] = ['Formatage', 'Ton', 'Langue', 'Contenu', 'Autre'];
 
 export default function StyleGuide() {
-  const [user] = useAuthState(auth);
+  const { t } = useI18n();
   const [userRules, setUserRules] = useState<StyleRule[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<StyleRule | null>(null);
@@ -46,11 +46,7 @@ export default function StyleGuide() {
   const [category, setCategory] = useState<StyleCategory>('Formatage');
   const [icon, setIcon] = useState('✨');
 
-  useEffect(() => {
-    if (user) {
-      fetchUserRules();
-    }
-  }, [user]);
+  useEffect(() => { fetchUserRules(); }, []);
 
   const fetchUserRules = async () => {
     setIsLoading(true);
@@ -126,37 +122,27 @@ export default function StyleGuide() {
     }
   };
 
-  const getCategoryColor = (cat: StyleCategory) => {
-    switch (cat) {
-      case 'Formatage': return 'border-blue-500';
-      case 'Ton': return 'border-brand-coral';
-      case 'Langue': return 'border-brand-teal';
-      case 'Contenu': return 'border-amber-500';
-      case 'Autre': return 'border-gray-400';
-      default: return 'border-gray-200';
-    }
-  };
-
+  const BORDER_CYCLE = ['#6B1E2E', '#E07065', '#2A7D6B', '#D4A017'];
   const allRules = [...HARDCODED_STYLE_RULES, ...userRules];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12">
+    <div className="max-w-7xl mx-auto space-y-12" data-tour="module-styleguide">
       <header>
-        <h1 className="font-headline text-4xl font-bold text-brand-bordeaux mb-2">Style Guide</h1>
-        <p className="font-body text-brand-navy/60">Règles appliquées à tous les contenus générés</p>
+        <h1 className="font-headline text-4xl font-bold text-brand-bordeaux mb-2">{t('sg.title')}</h1>
+        <p className="font-body text-brand-navy/60">{t('sg.subtitle')}</p>
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {allRules.map((rule) => (
+        {allRules.map((rule, idx) => (
           <motion.div
             key={rule.id}
             layout
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={() => !rule.isLocked && handleOpenModal(rule)}
+            style={{ borderLeftWidth: 4, borderLeftColor: BORDER_CYCLE[idx % BORDER_CYCLE.length] }}
             className={cn(
-              "relative bg-white p-6 rounded-2xl border-l-4 shadow-sm transition-all duration-300 group",
-              getCategoryColor(rule.category),
+              "relative bg-white p-6 rounded-2xl shadow-sm transition-all duration-300 group",
               !rule.isLocked && "cursor-pointer hover:shadow-md hover:-translate-y-1"
             )}
           >
@@ -175,14 +161,7 @@ export default function StyleGuide() {
             </div>
             <h3 className="font-bold text-brand-navy mb-2">{rule.title}</h3>
             <p className="text-xs text-brand-navy/60 leading-relaxed mb-4">{rule.description}</p>
-            <span className={cn(
-              "text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full",
-              rule.category === 'Formatage' && "bg-blue-50 text-blue-600",
-              rule.category === 'Ton' && "bg-brand-coral/5 text-brand-coral",
-              rule.category === 'Langue' && "bg-brand-teal/5 text-brand-teal",
-              rule.category === 'Contenu' && "bg-amber-50 text-amber-600",
-              rule.category === 'Autre' && "bg-gray-50 text-gray-600"
-            )}>
+            <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-bordeaux text-white">
               {rule.category}
             </span>
           </motion.div>
@@ -190,12 +169,12 @@ export default function StyleGuide() {
 
         <button
           onClick={() => handleOpenModal()}
-          className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-brand-bordeaux/10 hover:border-brand-bordeaux/30 hover:bg-brand-bordeaux/5 transition-all group min-h-[180px]"
+          className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-brand-bordeaux hover:bg-brand-bordeaux/5 transition-all group min-h-[180px]"
         >
           <div className="w-10 h-10 rounded-full bg-brand-bordeaux/5 flex items-center justify-center text-brand-bordeaux mb-3 group-hover:scale-110 transition-transform">
             <Plus className="w-5 h-5" />
           </div>
-          <span className="text-xs font-bold text-brand-bordeaux">Ajouter une règle personnalisée</span>
+          <span className="text-xs font-bold text-brand-bordeaux">{t('sg.add')}</span>
         </button>
       </div>
 
@@ -216,7 +195,7 @@ export default function StyleGuide() {
               </button>
 
               <h2 className="font-headline text-2xl font-bold text-brand-bordeaux mb-6">
-                {editingRule ? 'Modifier la règle' : 'Nouvelle règle'}
+                {editingRule ? t('sg.editRule') : t('sg.newRule')}
               </h2>
 
               <form onSubmit={handleSave} className="space-y-6">

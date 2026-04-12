@@ -13,9 +13,8 @@ import {
   RotateCcw,
   AlertCircle
 } from 'lucide-react';
-import { db, auth } from '../firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { collection, query, getDocs, addDoc, Timestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { VoiceProfile, Language } from '../types';
 import { analyseTone } from '../services/aiService';
 import { clsx, type ClassValue } from 'clsx';
@@ -42,7 +41,6 @@ interface VoiceCreatorProps {
 }
 
 export default function VoiceCreator({ onClose, onSuccess }: VoiceCreatorProps) {
-  const [user] = useAuthState(auth);
   const [step, setStep] = useState(1);
   const [isAnalysing, setIsAnalysing] = useState(false);
 

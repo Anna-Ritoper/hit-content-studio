@@ -13,9 +13,9 @@ import {
   Save,
   RotateCcw
 } from 'lucide-react';
-import { db, auth } from '../firebase';
-import { useAuthState } from 'react-firebase-hooks/auth';
+import { db } from '../firebase';
 import { collection, query, getDocs, orderBy, deleteDoc, updateDoc, doc, Timestamp } from 'firebase/firestore';
+import { useI18n } from '../i18n';
 import { Draft, PostStatus } from '../types';
 import { format } from 'date-fns';
 import { isDemoMode, DEMO_DRAFTS } from '../demoData';
@@ -37,7 +37,7 @@ const STATUS_OPTIONS: PostStatus[] = ['A rediger', 'Brouillon', 'Pret', 'Publie'
 
 export default function Library() {
   const navigate = useNavigate();
-  const [user] = useAuthState(auth);
+  const { t } = useI18n();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [search, setSearch] = useState('');
   const [selectedDraft, setSelectedDraft] = useState<Draft | null>(null);
@@ -53,15 +53,17 @@ export default function Library() {
     return () => window.removeEventListener('demo-mode-change', handler);
   }, []);
 
-  useEffect(() => {
-    if (user) fetchDrafts();
-  }, [user]);
+  useEffect(() => { fetchDrafts(); }, []);
 
   const fetchDrafts = async () => {
-    const q = query(collection(db, 'drafts'), orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
-    const draftsData = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Draft));
-    setDrafts(draftsData);
+    try {
+      const q = query(collection(db, 'drafts'), orderBy('createdAt', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const draftsData = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Draft));
+      setDrafts(draftsData);
+    } catch (e) {
+      console.error('fetch drafts failed', e);
+    }
   };
 
   const handleDelete = async (id: string) => {
