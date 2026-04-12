@@ -2,6 +2,23 @@ import { SYSTEM_PROMPT_GUIDELINES, cleanGeneratedText } from "../constants";
 import { isDemoMode, DEMO_POST_TEXT, DEMO_SVG } from "../demoData";
 import { edhecLogoSvgGroup } from "../edhecLogo";
 
+export function getLengthBounds(lengthTarget: string): { min: number; max: number } {
+  const t = (lengthTarget || '').toLowerCase();
+  if (t.startsWith('short')) return { min: 150, max: 300 };
+  if (t.startsWith('long')) return { min: 800, max: 1500 };
+  return { min: 300, max: 800 };
+}
+
+export function countWords(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+export function truncateToWords(text: string, maxWords: number): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text;
+  return words.slice(0, maxWords).join(' ') + '...';
+}
+
 // Simulate typing effect: reveal text character by character over ~2.5s
 const simulateStreaming = async (text: string, onChunk: (chunk: string) => void): Promise<string> => {
   const chars = text.split('');
@@ -37,6 +54,8 @@ export const generatePost = async (params: {
   onChunk?: (chunk: string) => void;
 }) => {
   const cibleLine = params.cible ? `- Target audience (cible): ${params.cible}. Adapt vocabulary, depth, and tone to this audience.` : '';
+  const { min: minWords, max: maxWords } = getLengthBounds(params.lengthTarget);
+  const lengthRule = `STRICT LENGTH RULE: the post must be between ${minWords} and ${maxWords} words. Do not exceed ${maxWords} words under any circumstances. Count your words before responding.`;
 
   const system = params.mode === 'generate'
     ? `You are a content assistant for the EDHEC Management in Innovative Health Chair, a French business school research chair focused on healthcare innovation, digital health, and AI in healthcare.
@@ -49,8 +68,9 @@ ${params.additionalRules || ''}
 Guidelines:
 - Match the language setting: ${params.language}
 - Content type is: ${params.contentType}
-- Target length: ${params.lengthTarget}
+- Target length: ${params.lengthTarget} (${minWords} to ${maxWords} words)
 - Character limit: ${params.charLimit} : stay under it
+${lengthRule}
 ${cibleLine}
 - If FR+EN: write the French version first, then "---" as separator, then the English version
 - Append these hashtags at the end: ${params.hashtags}
@@ -72,8 +92,9 @@ The user has provided a rough draft or idea below. Rewrite it fully in ${params.
 
 Guidelines:
 - Match the language setting: ${params.language}
-- Target length: ${params.lengthTarget}
+- Target length: ${params.lengthTarget} (${minWords} to ${maxWords} words)
 - Character limit: ${params.charLimit} : stay under it
+${lengthRule}
 ${cibleLine}
 - Append these hashtags at the end: ${params.hashtags}
 

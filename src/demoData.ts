@@ -11,9 +11,11 @@ const DEMO_KEY = 'hit-demo-mode';
 
 export function isDemoMode(): boolean {
   try {
-    return localStorage.getItem(DEMO_KEY) === 'true';
+    const v = localStorage.getItem(DEMO_KEY);
+    if (v === null) return true;
+    return v === 'true';
   } catch {
-    return false;
+    return true;
   }
 }
 

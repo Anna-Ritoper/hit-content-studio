@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const response = await client.messages.create({
           model: 'claude-sonnet-4-6',
-          max_tokens: 2000,
+          max_tokens: 4000,
           system,
           messages: [{ role: 'user', content: userMessage }],
           stream: true,
@@ -45,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else {
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: 4000,
         system,
         messages: [{ role: 'user', content: userMessage }],
       });

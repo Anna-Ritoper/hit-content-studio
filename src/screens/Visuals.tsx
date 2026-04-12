@@ -33,6 +33,15 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+function stripSvgFences(raw: string): string {
+  if (!raw) return '';
+  let out = raw.trim();
+  out = out.replace(/^```(?:svg|xml|html)?\s*/i, '');
+  out = out.replace(/```\s*$/i, '');
+  const match = out.match(/<svg[\s\S]*<\/svg>/i);
+  return match ? match[0] : out;
+}
+
 // Fetch the EDHEC logo SVG and convert to base64 PNG for PPTX embedding
 async function fetchLogoBase64(): Promise<string | null> {
   try {
@@ -143,20 +152,25 @@ export default function Visuals() {
       }
     };
 
+    const programme = (quickProgramme || 'Chaire Management in Innovative Health').toUpperCase();
+    const title = quickTitle || 'HIT Content Studio';
+    const points = (quickKeyPoints || '').split('\n').map(p => p.trim()).filter(Boolean);
+
     // Cover slide
     const cover = pptx.addSlide();
     cover.background = { color: '6B1E2E' };
-    cover.addText(quickProgramme.toUpperCase(), { x: 0.8, y: 1, w: 8.4, h: 0.5, fontSize: 12, color: 'D4614A', fontFace: 'Arial', bold: true });
-    cover.addText(quickTitle, { x: 0.8, y: 2, w: 8.4, h: 2, fontSize: 32, color: 'FFFFFF', fontFace: 'Arial', bold: true });
+    cover.addText(programme, { x: 0.8, y: 1, w: 8.4, h: 0.5, fontSize: 12, color: 'D4614A', fontFace: 'Arial', bold: true });
+    cover.addText(title, { x: 0.8, y: 2, w: 8.4, h: 2.5, fontSize: 32, color: 'FFFFFF', fontFace: 'Arial', bold: true, valign: 'top' });
+    cover.addText(quickFormat, { x: 0.8, y: 5, w: 8.4, h: 0.5, fontSize: 14, color: 'FAF8F4', fontFace: 'Arial' });
     addLogo(cover);
 
     // Content slides from key points
-    const points = quickKeyPoints.split('\n').filter(p => p.trim());
     for (let i = 0; i < points.length; i++) {
       const slide = pptx.addSlide();
       slide.background = { color: 'FAF8F4' };
-      slide.addText(`${i + 1}.`, { x: 0.8, y: 0.8, w: 1, h: 0.8, fontSize: 36, color: 'D4614A', fontFace: 'Arial', bold: true });
-      slide.addText(points[i].trim(), { x: 0.8, y: 2, w: 8.4, h: 3, fontSize: 20, color: '1A1F3C', fontFace: 'Arial' });
+      slide.addText(`${i + 1}.`, { x: 0.8, y: 0.8, w: 1.2, h: 1, fontSize: 48, color: 'D4614A', fontFace: 'Arial', bold: true });
+      slide.addText(title, { x: 0.8, y: 0.8, w: 8.4, h: 0.6, fontSize: 14, color: '6B1E2E', fontFace: 'Arial', bold: true, align: 'right' });
+      slide.addText(points[i], { x: 0.8, y: 2.2, w: 8.4, h: 3.5, fontSize: 22, color: '1A1F3C', fontFace: 'Arial', valign: 'top' });
       slide.addText(`${i + 2} / ${points.length + 2}`, { x: 8, y: 6.5, w: 1.5, h: 0.5, fontSize: 9, color: '999999', fontFace: 'Arial', align: 'right' });
       addLogo(slide);
     }
@@ -164,7 +178,8 @@ export default function Visuals() {
     // Closing slide
     const closing = pptx.addSlide();
     closing.background = { color: '1A1F3C' };
-    closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 2.5, w: 8.4, h: 1.5, fontSize: 24, color: 'FFFFFF', fontFace: 'Arial', bold: true, align: 'center' });
+    closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 2.5, w: 8.4, h: 1, fontSize: 24, color: 'FFFFFF', fontFace: 'Arial', bold: true, align: 'center' });
+    closing.addText(title, { x: 0.8, y: 3.8, w: 8.4, h: 1, fontSize: 16, color: 'D4614A', fontFace: 'Arial', align: 'center' });
     addLogo(closing);
 
     await pptx.writeFile({ fileName: `HIT-Visual-${Date.now()}.pptx` });
@@ -256,7 +271,7 @@ export default function Visuals() {
         aspectRatio: quickFormat === 'Visuel unique' ? '1:1' : '4:5',
         additionalRules
       });
-      setGeneratedSvg(svg || '');
+      setGeneratedSvg(stripSvgFences(svg || ''));
     } catch (error) {
       console.error("Visual generation failed:", error);
     } finally {
@@ -279,7 +294,7 @@ export default function Visuals() {
         aspectRatio: '1:1',
         additionalRules
       });
-      setGeneratedSvg(svg || '');
+      setGeneratedSvg(stripSvgFences(svg || ''));
     } catch (error) {
       console.error("Custom visual generation failed:", error);
     } finally {
@@ -427,34 +442,42 @@ export default function Visuals() {
           </form>
 
           {generatedSvg && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-12 space-y-4"
             >
               <div className="flex items-center justify-between">
                 <h3 className="font-headline font-bold text-brand-navy">Résultat</h3>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => setGeneratedSvg('')}
-                    className="p-2 text-brand-navy/40 hover:text-brand-coral"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setGeneratedSvg('')}
+                  className="p-2 text-brand-navy/40 hover:text-brand-coral"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <div className="card p-0 overflow-hidden bg-white shadow-xl">
+              <div className="flex justify-center">
                 <div
-                  className="w-full aspect-square"
+                  className="bg-white border border-brand-bordeaux/10 rounded-xl shadow-xl p-4 overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+                  style={{ maxWidth: 600, maxHeight: 600, width: '100%', aspectRatio: '1 / 1' }}
                   dangerouslySetInnerHTML={{ __html: generatedSvg }}
                 />
               </div>
-              <button
-                onClick={exportPptxQuick}
-                className="w-full py-2 border border-brand-bordeaux/20 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all flex items-center justify-center gap-2"
-              >
-                <Download className="w-4 h-4" /> Export PPTX
-              </button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <button
+                  onClick={exportPptxQuick}
+                  className="py-3 bg-brand-bordeaux text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-bordeaux/90 transition-all flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" /> Télécharger PPTX
+                </button>
+                <button
+                  onClick={(e) => handleGenerateQuick(e as any)}
+                  disabled={isGenerating}
+                  className="py-3 border-2 border-brand-teal text-brand-teal rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-teal/5 transition-all flex items-center justify-center gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" /> Générer à nouveau
+                </button>
+              </div>
             </motion.div>
           )}
         </div>
@@ -674,34 +697,42 @@ export default function Visuals() {
             </div>
 
             {generatedSvg && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-12 space-y-4"
               >
                 <div className="flex items-center justify-between">
                   <h3 className="font-headline font-bold text-brand-navy">Résultat</h3>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => setGeneratedSvg('')}
-                      className="p-2 text-brand-navy/40 hover:text-brand-coral"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setGeneratedSvg('')}
+                    className="p-2 text-brand-navy/40 hover:text-brand-coral"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <div className="card p-0 overflow-hidden bg-white shadow-xl">
+                <div className="flex justify-center">
                   <div
-                    className="w-full aspect-square"
+                    className="bg-white border border-brand-bordeaux/10 rounded-xl shadow-xl p-4 overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
+                    style={{ maxWidth: 600, maxHeight: 600, width: '100%', aspectRatio: '1 / 1' }}
                     dangerouslySetInnerHTML={{ __html: generatedSvg }}
                   />
                 </div>
-                <button
-                  onClick={exportPptxCustom}
-                  className="w-full py-2 border border-brand-bordeaux/20 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all flex items-center justify-center gap-2"
-                >
-                  <Download className="w-4 h-4" /> Export PPTX
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <button
+                    onClick={exportPptxCustom}
+                    className="py-3 bg-brand-bordeaux text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-bordeaux/90 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" /> Télécharger PPTX
+                  </button>
+                  <button
+                    onClick={handleGenerateCustom}
+                    disabled={isGenerating}
+                    className="py-3 border-2 border-brand-teal text-brand-teal rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-teal/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" /> Générer à nouveau
+                  </button>
+                </div>
               </motion.div>
             )}
           </div>

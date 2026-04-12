@@ -17,7 +17,7 @@ import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible } from '../types';
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
-import { generatePost, generateVisualSvg } from '../services/aiService';
+import { generatePost, generateVisualSvg, getLengthBounds, countWords, truncateToWords } from '../services/aiService';
 import VoiceCreator from '../components/VoiceCreator';
 import { clsx, type ClassValue } from 'clsx';
 import html2canvas from 'html2canvas';
@@ -34,7 +34,7 @@ export default function Generate() {
   const [stats, setStats] = useState('');
   const [draftInput, setDraftInput] = useState('');
   const [contentType, setContentType] = useState('Baromètre');
-  const [postLength, setPostLength] = useState('Medium (500-1500)');
+  const [postLength, setPostLength] = useState('Medium');
   const [language, setLanguage] = useState<Language | 'FR+EN'>('FR');
   const [platform, setPlatform] = useState<Platform>('LinkedIn');
   const [selectedVoice, setSelectedVoice] = useState<VoiceProfile | null>(SIMONE_WHALE_DEFAULT);
@@ -42,6 +42,7 @@ export default function Generate() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isVoiceCreatorOpen, setIsVoiceCreatorOpen] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
+  const [lengthWarning, setLengthWarning] = useState('');
   const [isHashtagsExpanded, setIsHashtagsExpanded] = useState(false);
   const [selectedHashtagSet, setSelectedHashtagSet] = useState<string | null>(null);
   const [link, setLink] = useState('');
@@ -111,7 +112,15 @@ export default function Generate() {
           setGeneratedContent(prev => prev + chunk);
         }
       });
-      if (fullText) setGeneratedContent(fullText);
+      const { max: maxWords } = getLengthBounds(postLength);
+      let finalText = fullText || '';
+      if (countWords(finalText) > maxWords) {
+        finalText = truncateToWords(finalText, maxWords);
+        setLengthWarning(`Output exceeded ${maxWords} words and was truncated.`);
+      } else {
+        setLengthWarning('');
+      }
+      if (finalText) setGeneratedContent(finalText);
     } catch (error: any) {
       console.error("Generation failed:", error);
       setGeneratedContent(`[Generation error: ${error.message || 'Unknown error'}. Please try again.]`);
@@ -318,9 +327,9 @@ export default function Generate() {
                 onChange={(e) => setPostLength(e.target.value)}
                 className="input-field text-xs"
               >
-                <option>Short (under 500 chars)</option>
-                <option>Medium (500-1500)</option>
-                <option>Long (1500+)</option>
+                <option value="Short">Short (150 to 300 words)</option>
+                <option value="Medium">Medium (300 to 800 words)</option>
+                <option value="Long">Long (800 to 1500 words)</option>
               </select>
             </div>
             <div>
@@ -433,11 +442,16 @@ export default function Generate() {
               <label className="input-label">Generated Content</label>
               <span className={cn(
                 "text-[10px] font-bold",
-                generatedContent.length > (platform === 'LinkedIn' ? 2800 : 900) ? "text-brand-coral" : "text-brand-navy/40"
+                countWords(generatedContent) > getLengthBounds(postLength).max ? "text-brand-coral" : "text-brand-navy/40"
               )}>
-                {generatedContent.length} / {platform === 'LinkedIn' ? 3000 : 1000} chars
+                {countWords(generatedContent)} words / max {getLengthBounds(postLength).max} | {generatedContent.length} chars
               </span>
             </div>
+            {lengthWarning && (
+              <div className="mb-3 px-3 py-2 bg-brand-coral/10 border border-brand-coral/30 rounded-md text-[11px] font-bold text-brand-coral">
+                {lengthWarning}
+              </div>
+            )}
 
             <textarea
               value={generatedContent}
