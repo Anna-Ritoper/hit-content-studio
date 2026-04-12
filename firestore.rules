@@ -1,85 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    // Collection: voiceProfiles
-    // Fields: name, role, languages, avatarColor, styleTags, structurePattern, formalityScore, emojiUsage, languageNotes, sampleSentence, systemPromptFragment, createdAt, updatedAt
-    //
-    // Collection: calendarEntries
-    // Fields: date, voiceProfileId, voiceName, platform, language, theme, topic, status, draftId, link, createdAt
-    //
-    // Collection: drafts
-    // Fields: voiceProfileId, voiceName, platform, language, contentType, topic, stats, generatedText, editedText, status, calendarEntryId, visualSvg, createdAt, updatedAt
-    //
-    // Collection: hashtagSets
-    // Fields: name, hashtags
-    // ===============================================================
-
-    // Helper Functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isAuthenticated() && 
-        (request.auth.token.email == "anna.ritoper@gmail.com");
-    }
-
-    // Domain Validators
-    function isValidVoiceProfile(data) {
-      return data.keys().hasAll(['name', 'role', 'languages', 'avatarColor']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.role is string && data.role.size() < 200 &&
-             data.languages is list &&
-             data.avatarColor is string && data.avatarColor.matches("^#[0-9A-Fa-f]{6}$");
-    }
-
-    function isValidCalendarEntry(data) {
-      return data.keys().hasAll(['date', 'voiceProfileId', 'platform', 'status']) &&
-             data.date is timestamp &&
-             data.voiceProfileId is string &&
-             data.platform in ['LinkedIn', 'WhatsApp'] &&
-             data.status in ['À rédiger', 'Brouillon', 'Prêt', 'Publié'];
-    }
-
-    function isValidDraft(data) {
-      return data.keys().hasAll(['voiceProfileId', 'topic', 'status']) &&
-             data.voiceProfileId is string &&
-             data.topic is string && data.topic.size() < 1000 &&
-             data.status is string;
-    }
-
-    function isValidHashtagSet(data) {
-      return data.keys().hasAll(['name', 'hashtags']) &&
-             data.name is string && data.hashtags is list;
-    }
-
-    // Rules
-    match /voiceProfiles/{profileId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin() && isValidVoiceProfile(request.resource.data);
-    }
-
-    match /calendarEntries/{entryId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isAuthenticated() && isValidCalendarEntry(request.resource.data);
-    }
-
-    match /drafts/{draftId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isAuthenticated() && isValidDraft(request.resource.data);
-    }
-
-    match /hashtagSets/{setId} {
-      allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin() && isValidHashtagSet(request.resource.data);
-    }
-
-    match /settings/{settingId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+    // Internal team tool behind a password gate (VITE_APP_PASSWORD).
+    // Firebase Auth was removed; access is gated client-side.
+    match /{document=**} {
+      allow read, write: if true;
     }
   }
 }
