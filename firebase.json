@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "database": "hit-content-studio-db",
+    "rules": "firestore.rules"
+  }
+}
