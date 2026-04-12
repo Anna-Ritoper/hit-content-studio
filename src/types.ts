@@ -47,6 +47,7 @@ export interface CalendarEntry {
   status: PostStatus;
   draftId?: string;
   link?: string;
+  linkedinUrl?: string;
   createdAt: Timestamp;
 }
 

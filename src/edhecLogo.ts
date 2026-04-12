@@ -1,8 +1,10 @@
 // EDHEC logo: path to static asset and inline SVG for embedding in visuals
 // No em dashes (U+2014/U+2013) anywhere in this file
 
-/** Path to the logo file served from public/ */
-export const EDHEC_LOGO_PATH = '/Logo-EDHEC-2026.svg';
+/** Path to the logo file served from public/ (from EDHEC official toolkit 2025-2026) */
+export const EDHEC_LOGO_PATH = '/EDHEC_Logo_horizontal.png';
+export const EDHEC_LOGO_WHITE_PATH = '/EDHEC_Logo_horizontal_white.png';
+export const EDHEC_LOGO_DARK_PATH = '/EDHEC_Logo_horizontal_dark.png';
 
 /**
  * Compact inline SVG snippet for embedding inside generated SVG visuals.

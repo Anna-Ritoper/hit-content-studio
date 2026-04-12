@@ -21,6 +21,7 @@ import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible }
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
 import { generatePost, generateVisualSvg } from '../services/aiService';
 import VoiceCreator from '../components/VoiceCreator';
+import Tutorial from '../components/Tutorial';
 import { clsx, type ClassValue } from 'clsx';
 import html2canvas from 'html2canvas';
 import { twMerge } from 'tailwind-merge';
@@ -175,6 +176,7 @@ export default function Generate() {
 
   return (
     <div className="max-w-7xl mx-auto">
+      <Tutorial run />
       {/* Voice Profile Selector */}
       <div className="mb-12 bg-white rounded-2xl p-6 border border-brand-bordeaux/5 shadow-sm">
         <label className="text-[10px] font-bold text-brand-coral uppercase tracking-[0.2em] mb-4 block">Posting As</label>
@@ -226,7 +228,7 @@ export default function Generate() {
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8 items-start">
         {/* Left Panel - Inputs */}
         <div className="card space-y-6">
-          <div className="flex bg-brand-warm-white p-1 rounded-lg border border-brand-bordeaux/10">
+          <div data-tour="mode-toggle" className="flex bg-brand-warm-white p-1 rounded-lg border border-brand-bordeaux/10">
             <button
               onClick={() => setMode('generate')}
               className={cn(
@@ -283,7 +285,7 @@ export default function Generate() {
             </div>
           )}
 
-          <div>
+          <div data-tour="content-type">
             <label className="input-label">Content Type</label>
             <div className="flex flex-wrap gap-2">
               {['Baromètre', 'Événement', 'Webinaire', 'Certificats HIT', 'Thought leadership', 'Newsletter'].map(type => (
@@ -405,6 +407,7 @@ export default function Generate() {
 
           <div className="space-y-4">
             <button
+              data-tour="generate-button"
               onClick={handleGenerate}
               disabled={isGenerating || !selectedVoice || (mode === 'generate' ? !topic : !draftInput)}
               className="btn-primary w-full flex items-center justify-center gap-2"

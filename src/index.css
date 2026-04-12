@@ -1,15 +1,18 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Poppins:wght@300;400;500&display=swap');
 
 @theme {
-  --font-headline: "Playfair Display", serif;
+  --font-headline: "Montserrat", sans-serif;
   --font-body: "DM Sans", sans-serif;
   --font-poppins: "Poppins", sans-serif;
 
   --color-brand-bordeaux: #6B1E2E;
-  --color-brand-coral: #D4614A;
+  --color-brand-coral: #E07065;
   --color-brand-teal: #2A7D6B;
   --color-brand-navy: #1A1F3C;
-  --color-brand-warm-white: #FAF8F4;
+  --color-brand-warm-white: #F5F0EC;
+  --color-brand-cream: #F5F0EC;
+  --color-brand-gold: #D4A017;
 }
 
 @layer base {
@@ -117,4 +120,3 @@
   animation: subtitleFade2 8s ease-in-out infinite;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;700&family=Poppins:wght@300;400;500&display=swap');

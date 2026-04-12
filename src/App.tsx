@@ -14,9 +14,11 @@ import StyleGuide from './screens/StyleGuide';
 import Calendar from './screens/Calendar';
 import Library from './screens/Library';
 import Settings from './screens/Settings';
+import PasswordGate from './components/PasswordGate';
 
 export default function App() {
   return (
+    <PasswordGate>
     <BrowserRouter>
       <Routes>
         {/* Level 1: Splash Screen */}
@@ -37,5 +39,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </PasswordGate>
   );
 }

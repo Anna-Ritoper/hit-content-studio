@@ -48,6 +48,7 @@ interface EntryForm {
   topic: string;
   status: PostStatus;
   date: string; // yyyy-MM-dd for input[type=date]
+  linkedinUrl: string;
 }
 
 const EMPTY_FORM: EntryForm = {
@@ -59,6 +60,7 @@ const EMPTY_FORM: EntryForm = {
   topic: '',
   status: 'A rediger',
   date: format(new Date(), 'yyyy-MM-dd'),
+  linkedinUrl: '',
 };
 
 export default function Calendar() {
@@ -152,6 +154,7 @@ export default function Calendar() {
       topic: entry.topic,
       status: entry.status,
       date: format(entry.date.toDate(), 'yyyy-MM-dd'),
+      linkedinUrl: entry.linkedinUrl || '',
     });
     setShowForm(true);
   };
@@ -167,6 +170,7 @@ export default function Calendar() {
       topic: form.topic,
       status: form.status,
       date: Timestamp.fromDate(dateObj),
+      linkedinUrl: form.linkedinUrl || '',
     };
 
     if (editingId) {
@@ -336,6 +340,17 @@ export default function Calendar() {
                     <span className="text-[10px] font-bold text-brand-navy">{entry.voiceName}</span>
                   </div>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {entry.linkedinUrl && (
+                      <a
+                        href={entry.linkedinUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 text-[#0A66C2] hover:bg-[#0A66C2]/10 rounded-md transition-all"
+                        title="Open LinkedIn post"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
                     <button
                       onClick={() => openInGenerate(entry)}
                       className="p-1.5 text-brand-teal hover:bg-brand-teal/10 rounded-md transition-all"
@@ -495,6 +510,16 @@ export default function Calendar() {
                     onChange={(e) => setForm({ ...form, topic: e.target.value })}
                     className="input-field resize-none"
                     placeholder="What is this post about?"
+                  />
+                </div>
+                <div>
+                  <label className="input-label">LinkedIn URL (optional, once published)</label>
+                  <input
+                    type="url"
+                    value={form.linkedinUrl}
+                    onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })}
+                    className="input-field"
+                    placeholder="https://www.linkedin.com/posts/..."
                   />
                 </div>
               </div>
