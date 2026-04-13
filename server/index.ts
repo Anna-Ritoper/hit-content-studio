@@ -17,7 +17,8 @@ function getClient() {
 app.post('/api/generate', async (req, res) => {
   try {
     const client = getClient();
-    const { system, userMessage, stream } = req.body;
+    const { system, userMessage, stream, maxTokens } = req.body;
+    const safeMaxTokens = Math.min(Math.max(parseInt(maxTokens) || 1000, 100), 2000);
 
     if (stream) {
       res.setHeader('Content-Type', 'text/event-stream');
@@ -26,7 +27,7 @@ app.post('/api/generate', async (req, res) => {
 
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: safeMaxTokens,
         system,
         messages: [{ role: 'user', content: userMessage }],
         stream: true,
@@ -42,7 +43,7 @@ app.post('/api/generate', async (req, res) => {
     } else {
       const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: safeMaxTokens,
         system,
         messages: [{ role: 'user', content: userMessage }],
       });

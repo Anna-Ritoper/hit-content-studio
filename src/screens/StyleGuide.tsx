@@ -1,14 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Plus, 
-  Trash2, 
-  Lock, 
+import {
+  Plus,
+  Trash2,
+  Lock,
   X as CloseIcon,
   Check,
   AlertCircle,
-  BookOpen
+  BookOpen,
+  Ban,
+  MessageSquare,
+  Flag,
+  Hand,
+  Hash,
+  Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  'ban': Ban,
+  'message-square': MessageSquare,
+  'flag': Flag,
+  'hand': Hand,
+  'hash': Hash,
+  'alert-circle': AlertCircle,
+  'sparkles': Sparkles,
+  'check': Check,
+  'book-open': BookOpen,
+};
+
+function RuleIcon({ name, color }: { name: string; color: string }) {
+  const Icon = ICON_MAP[name];
+  if (!Icon) return <span className="text-2xl leading-none">{name}</span>;
+  return <Icon className="w-6 h-6" style={{ color }} strokeWidth={2} />;
+}
 import { db } from '../firebase';
 import { useI18n } from '../i18n';
 import {
@@ -44,7 +69,7 @@ export default function StyleGuide() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<StyleCategory>('Formatage');
-  const [icon, setIcon] = useState('✨');
+  const [icon, setIcon] = useState('sparkles');
 
   useEffect(() => { fetchUserRules(); }, []);
 
@@ -77,7 +102,7 @@ export default function StyleGuide() {
       setTitle('');
       setDescription('');
       setCategory('Formatage');
-      setIcon('✨');
+      setIcon('sparkles');
     }
     setIsModalOpen(true);
   };
@@ -147,7 +172,7 @@ export default function StyleGuide() {
             )}
           >
             <div className="flex items-start justify-between mb-4">
-              <span className="text-2xl">{rule.icon}</span>
+              <RuleIcon name={rule.icon} color={BORDER_CYCLE[idx % BORDER_CYCLE.length]} />
               {rule.isLocked ? (
                 <Lock className="w-3 h-3 text-brand-navy/20" />
               ) : (
@@ -237,13 +262,15 @@ export default function StyleGuide() {
                   </div>
                   <div>
                     <label className="input-label">Icône</label>
-                    <input 
-                      type="text"
+                    <select
                       value={icon}
                       onChange={(e) => setIcon(e.target.value)}
-                      className="input-field text-center"
-                      placeholder="Emoji"
-                    />
+                      className="input-field"
+                    >
+                      {Object.keys(ICON_MAP).map(k => (
+                        <option key={k} value={k}>{k}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

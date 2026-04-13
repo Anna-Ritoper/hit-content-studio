@@ -9,7 +9,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!key) return res.status(500).json({ error: 'ANTHROPIC_API_KEY is not set' });
 
     const client = new Anthropic({ apiKey: key });
-    const { system, userMessage, stream } = req.body;
+    const { system, userMessage, stream, maxTokens } = req.body;
+    const safeMaxTokens = Math.min(Math.max(parseInt(maxTokens) || 1000, 100), 2000);
 
     if (stream) {
       res.setHeader('Content-Type', 'text/event-stream');
@@ -20,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const response = await client.messages.create({
           model: 'claude-sonnet-4-6',
-          max_tokens: 4000,
+          max_tokens: safeMaxTokens,
           system,
           messages: [{ role: 'user', content: userMessage }],
           stream: true,

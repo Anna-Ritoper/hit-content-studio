@@ -9,6 +9,14 @@ export function getLengthBounds(lengthTarget: string): { min: number; max: numbe
   return { min: 300, max: 800 };
 }
 
+// Hard char + token caps per length tier (LinkedIn-friendly).
+export function getLengthCaps(lengthTarget: string): { maxChars: number; maxTokens: number } {
+  const t = (lengthTarget || '').toLowerCase();
+  if (t.startsWith('short')) return { maxChars: 800, maxTokens: 400 };
+  if (t.startsWith('long')) return { maxChars: 4000, maxTokens: 1800 };
+  return { maxChars: 2000, maxTokens: 1000 };
+}
+
 export function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
@@ -55,7 +63,17 @@ export const generatePost = async (params: {
 }) => {
   const cibleLine = params.cible ? `- Target audience (cible): ${params.cible}. Adapt vocabulary, depth, and tone to this audience.` : '';
   const { min: minWords, max: maxWords } = getLengthBounds(params.lengthTarget);
-  const lengthRule = `STRICT LENGTH RULE: the post must be between ${minWords} and ${maxWords} words. Do not exceed ${maxWords} words under any circumstances. Count your words before responding.`;
+  const { maxChars, maxTokens } = getLengthCaps(params.lengthTarget);
+  const charLimit = Math.min(params.charLimit || maxChars, maxChars);
+  const lengthRule = `STRICT LENGTH RULE: the post must be between ${minWords} and ${maxWords} words AND under ${charLimit} characters. Do not exceed either limit under any circumstances. Count words and characters before responding.`;
+  const linkedInRule = params.platform === 'LinkedIn'
+    ? `LINKEDIN POST FORMAT (mandatory):
+- Open with a one-line hook on its own line.
+- Use short paragraphs of 1 to 3 lines, separated by a blank line.
+- No markdown headers, no bullet asterisks. Use line breaks and emojis sparingly for structure.
+- Hashtags grouped on the final line, never inline.
+- Plain text only. No surrounding quotes.`
+    : '';
 
   const system = params.mode === 'generate'
     ? `You are a content assistant for the EDHEC Management in Innovative Health Chair, a French business school research chair focused on healthcare innovation, digital health, and AI in healthcare.
@@ -69,8 +87,9 @@ Guidelines:
 - Match the language setting: ${params.language}
 - Content type is: ${params.contentType}
 - Target length: ${params.lengthTarget} (${minWords} to ${maxWords} words)
-- Character limit: ${params.charLimit} : stay under it
+- Character limit: ${charLimit} : stay under it
 ${lengthRule}
+${linkedInRule}
 ${cibleLine}
 - If FR+EN: write the French version first, then "---" as separator, then the English version
 - Append these hashtags at the end: ${params.hashtags}
@@ -93,8 +112,9 @@ The user has provided a rough draft or idea below. Rewrite it fully in ${params.
 Guidelines:
 - Match the language setting: ${params.language}
 - Target length: ${params.lengthTarget} (${minWords} to ${maxWords} words)
-- Character limit: ${params.charLimit} : stay under it
+- Character limit: ${charLimit} : stay under it
 ${lengthRule}
+${linkedInRule}
 ${cibleLine}
 - Append these hashtags at the end: ${params.hashtags}
 
@@ -119,7 +139,7 @@ Rewrite this now. No preamble, no explanation. Just the rewritten post.`;
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system, userMessage, stream: true }),
+        body: JSON.stringify({ system, userMessage, stream: true, maxTokens }),
       });
 
       if (!res.ok) {
@@ -168,7 +188,7 @@ Rewrite this now. No preamble, no explanation. Just the rewritten post.`;
       const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system, userMessage, stream: false }),
+        body: JSON.stringify({ system, userMessage, stream: false, maxTokens }),
       });
 
       if (!res.ok) {
@@ -186,7 +206,7 @@ Rewrite this now. No preamble, no explanation. Just the rewritten post.`;
     const res = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system, userMessage, stream: false }),
+      body: JSON.stringify({ system, userMessage, stream: false, maxTokens }),
     });
 
     if (!res.ok) {

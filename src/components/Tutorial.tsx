@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Joyride, EventData, STATUS, ACTIONS, EVENTS, Step } from 'react-joyride';
 import { useI18n } from '../i18n';
@@ -15,6 +15,7 @@ export default function Tutorial({ launchKey = 0 }: TutorialProps) {
   const { t } = useI18n();
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const endedRef = useRef(false);
 
   const steps: TourStep[] = useMemo(() => [
     { route: '/generate', target: 'body', placement: 'center', title: t('tour.welcome.title'), content: t('tour.welcome.desc') },
@@ -33,12 +34,14 @@ export default function Tutorial({ launchKey = 0 }: TutorialProps) {
   ], [t]);
 
   const endTour = useCallback(() => {
+    endedRef.current = true;
     setRun(false);
     setStepIndex(0);
   }, []);
 
   useEffect(() => {
     if (launchKey > 0) {
+      endedRef.current = false;
       setStepIndex(0);
       if (location.pathname !== '/generate') {
         navigate('/generate');
@@ -54,16 +57,18 @@ export default function Tutorial({ launchKey = 0 }: TutorialProps) {
     const { status, type, action } = data;
     const index = (data as any).index ?? 0;
 
-    if (action === ACTIONS.CLOSE) {
+    // Any close signal: stop immediately, do not advance
+    if (action === ACTIONS.CLOSE || type === EVENTS.TOUR_END) {
       endTour();
       return;
     }
 
-    const finished: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
-    if (finished.includes(status)) {
+    if (status === STATUS.FINISHED || status === STATUS.SKIPPED || status === STATUS.PAUSED) {
       endTour();
       return;
     }
+
+    if (endedRef.current) return;
 
     if (type === EVENTS.STEP_AFTER || type === EVENTS.TARGET_NOT_FOUND) {
       const nextIndex = index + (action === ACTIONS.PREV ? -1 : 1);
@@ -77,6 +82,7 @@ export default function Tutorial({ launchKey = 0 }: TutorialProps) {
         setRun(false);
         navigate(nextStep.route);
         setTimeout(() => {
+          if (endedRef.current) return;
           setStepIndex(nextIndex);
           setRun(true);
         }, 450);
@@ -90,6 +96,7 @@ export default function Tutorial({ launchKey = 0 }: TutorialProps) {
 
   return (
     <Joyride
+      key={launchKey}
       steps={steps}
       run={run}
       stepIndex={stepIndex}

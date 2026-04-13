@@ -19,6 +19,7 @@ import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible }
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
 import { generatePost, generateVisualSvg, getLengthBounds, countWords, truncateToWords } from '../services/aiService';
 import VoiceCreator from '../components/VoiceCreator';
+import { useI18n } from '../i18n';
 import { clsx, type ClassValue } from 'clsx';
 import html2canvas from 'html2canvas';
 import { twMerge } from 'tailwind-merge';
@@ -29,6 +30,7 @@ function cn(...inputs: ClassValue[]) {
 
 export default function Generate() {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [mode, setMode] = useState<'generate' | 'refine'>('generate');
   const [topic, setTopic] = useState('');
   const [stats, setStats] = useState('');
@@ -180,7 +182,7 @@ export default function Generate() {
     <div className="max-w-7xl mx-auto" data-tour="module-content">
       {/* Voice Profile Selector */}
       <div data-tour="voice-selector" className="mb-6 bg-white rounded-2xl p-4 border border-brand-bordeaux/5 shadow-sm relative">
-        <label className="text-[10px] font-bold text-brand-coral uppercase tracking-[0.2em] mb-2 block">Posting As</label>
+        <label className="text-[10px] font-bold text-brand-coral uppercase tracking-[0.2em] mb-2 block">{t('gen.postingAs')}</label>
         <button
           type="button"
           onClick={() => setIsVoiceDropdownOpen(o => !o)}
@@ -245,8 +247,8 @@ export default function Generate() {
       </div>
 
       <header className="mb-8">
-        <h1 className="font-headline text-4xl font-bold text-brand-bordeaux">Craft your post.</h1>
-        <p className="font-body text-brand-navy/60 mt-2">Craft content for the EDHEC Management in Innovative Health Chair.</p>
+        <h1 className="font-headline text-4xl font-bold text-brand-bordeaux">{t('gen.craft')}</h1>
+        <p className="font-body text-brand-navy/60 mt-2">{t('gen.craftDesc')}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-8 items-start">
@@ -260,7 +262,7 @@ export default function Generate() {
                 mode === 'generate' ? "bg-white text-brand-bordeaux shadow-sm" : "text-brand-navy/40 hover:text-brand-navy"
               )}
             >
-              ✨ Generate from scratch
+              {t('gen.fromScratch')}
             </button>
             <button
               onClick={() => setMode('refine')}
@@ -269,14 +271,14 @@ export default function Generate() {
                 mode === 'refine' ? "bg-white text-brand-bordeaux shadow-sm" : "text-brand-navy/40 hover:text-brand-navy"
               )}
             >
-              ✏️ Refine a draft
+              {t('gen.refine')}
             </button>
           </div>
 
           {mode === 'generate' ? (
             <>
               <div>
-                <label className="input-label">Topic / sujet</label>
+                <label className="input-label">{t('gen.topic')}</label>
                 <input
                   type="text"
                   value={topic}
@@ -286,7 +288,7 @@ export default function Generate() {
                 />
               </div>
               <div>
-                <label className="input-label">Key facts & data points</label>
+                <label className="input-label">{t('gen.keyFacts')}</label>
                 <textarea
                   rows={4}
                   value={stats}
@@ -298,7 +300,7 @@ export default function Generate() {
             </>
           ) : (
             <div>
-              <label className="input-label">Your draft / idée de départ</label>
+              <label className="input-label">{t('gen.draft')}</label>
               <textarea
                 rows={8}
                 value={draftInput}
@@ -310,7 +312,7 @@ export default function Generate() {
           )}
 
           <div data-tour="content-type">
-            <label className="input-label">Content Type</label>
+            <label className="input-label">{t('gen.contentType')}</label>
             <div className="flex flex-wrap gap-2">
               {['Baromètre', 'Événement', 'Webinaire', 'Certificats HIT', 'Thought leadership', 'Newsletter'].map(type => (
                 <button
@@ -328,7 +330,7 @@ export default function Generate() {
           </div>
 
           <div>
-            <label className="input-label">Cible (target audience)</label>
+            <label className="input-label">{t('gen.target')}</label>
             <div className="flex flex-wrap gap-2">
               {(['Professionnels de sante', 'Decideurs', 'Etudiants', 'Grand public', 'Partenaires', 'Academiques'] as Cible[]).map(c => (
                 <button
@@ -347,7 +349,7 @@ export default function Generate() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="input-label">Post Length</label>
+              <label className="input-label">{t('gen.length')}</label>
               <select 
                 value={postLength}
                 onChange={(e) => setPostLength(e.target.value)}
@@ -359,7 +361,7 @@ export default function Generate() {
               </select>
             </div>
             <div>
-              <label className="input-label">Language</label>
+              <label className="input-label">{t('gen.language')}</label>
               <div className="flex bg-brand-warm-white p-1 rounded-lg border border-brand-bordeaux/10">
                 {['FR', 'EN', 'FR+EN'].map(lang => (
                   <button
@@ -378,7 +380,7 @@ export default function Generate() {
           </div>
 
           <div>
-            <label className="input-label">Platform</label>
+            <label className="input-label">{t('gen.platform')}</label>
             <div className="flex bg-brand-warm-white p-1 rounded-lg border border-brand-bordeaux/10">
               {['LinkedIn', 'WhatsApp'].map(p => (
                 <button
@@ -400,7 +402,7 @@ export default function Generate() {
               onClick={() => setIsHashtagsExpanded(!isHashtagsExpanded)}
               className="flex items-center justify-between w-full text-brand-bordeaux font-bold text-xs uppercase tracking-widest"
             >
-              Hashtags
+              {t('gen.hashtags')}
               {isHashtagsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
             <AnimatePresence>
@@ -444,18 +446,18 @@ export default function Generate() {
                   >
                     <RotateCcw className="w-4 h-4" />
                   </motion.div>
-                  GENERATING...
+                  {t('gen.generating')}
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  {mode === 'generate' ? 'GENERATE POST' : 'REFINE DRAFT'}
+                  {mode === 'generate' ? t('gen.generateBtn') : t('gen.refineBtn')}
                 </>
               )}
             </button>
             {!selectedVoice && (
               <p className="text-center text-[10px] font-bold text-brand-coral uppercase tracking-widest">
-                Select a voice to continue
+                {t('gen.selectVoice')}
               </p>
             )}
           </div>
@@ -465,7 +467,7 @@ export default function Generate() {
         <div className="space-y-8">
           <div className="card min-h-[400px] flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <label className="input-label">Generated Content</label>
+              <label className="input-label">{t('gen.output')}</label>
               <span className={cn(
                 "text-[10px] font-bold",
                 countWords(generatedContent) > getLengthBounds(postLength).max ? "text-brand-coral" : "text-brand-navy/40"
@@ -483,7 +485,7 @@ export default function Generate() {
               value={generatedContent}
               onChange={(e) => setGeneratedContent(e.target.value)}
               className="flex-1 w-full bg-brand-warm-white/30 border-l-4 border-brand-bordeaux p-6 font-body text-sm leading-relaxed resize-none focus:outline-none"
-              placeholder="Your generated post will appear here..."
+              placeholder={t('gen.placeholder')}
             />
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -491,19 +493,19 @@ export default function Generate() {
                 onClick={handleGenerate}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all"
               >
-                <RotateCcw className="w-3 h-3" /> Regenerate
+                <RotateCcw className="w-3 h-3" /> {t('gen.regenerate')}
               </button>
               <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all">
-                <Copy className="w-3 h-3" /> Copy
+                <Copy className="w-3 h-3" /> {t('gen.copy')}
               </button>
               <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all">
-                <CalendarIcon className="w-3 h-3" /> Save to calendar
+                <CalendarIcon className="w-3 h-3" /> {t('gen.saveCal')}
               </button>
               <button 
                 onClick={() => setShowVisualGenerator(!showVisualGenerator)}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-teal uppercase tracking-widest hover:bg-brand-teal/5 transition-all"
               >
-                <ImageIcon className="w-3 h-3" /> Generate visual
+                <ImageIcon className="w-3 h-3" /> {t('gen.genVisual')}
               </button>
               <button className="p-2 border border-brand-bordeaux/10 rounded-lg text-brand-coral hover:bg-brand-coral/5 transition-all">
                 <Flag className="w-4 h-4" />

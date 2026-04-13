@@ -106,6 +106,17 @@ export const STRINGS: Dict = {
   'lib.subtitle': { FR: 'Gerez et affinez vos brouillons.', EN: 'Manage and refine your drafted content.' },
   'lib.search': { FR: 'Rechercher par mot-cle, voix ou sujet...', EN: 'Search by keyword, voice, or topic...' },
   'lib.empty': { FR: 'Aucun brouillon. Generez un post pour le voir ici.', EN: 'No drafts yet. Generate a post to see it here.' },
+  'lib.openInGen': { FR: 'Ouvrir dans Generer', EN: 'Open in Generate' },
+  'lib.reopen': { FR: 'Reouvrir dans Generer', EN: 'Reopen in Generate' },
+  'lib.export': { FR: 'Exporter .txt', EN: 'Export .txt' },
+  'lib.editLabel': { FR: 'Editer', EN: 'Edit' },
+  'lib.savingLabel': { FR: 'Enregistrement...', EN: 'Saving...' },
+  'lib.saveLabel': { FR: 'Enregistrer', EN: 'Save' },
+  'lib.cancelLabel': { FR: 'Annuler', EN: 'Cancel' },
+  'lib.topicLabel': { FR: 'Sujet', EN: 'Topic' },
+  'lib.contentLabel': { FR: 'Contenu du post', EN: 'Post Content' },
+  'lib.copyLabel': { FR: 'Copier', EN: 'Copy' },
+  'lib.charsLabel': { FR: 'caracteres', EN: 'chars' },
 
   // Voices
   'voices.title': { FR: 'Voices', EN: 'Voices' },

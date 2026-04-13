@@ -140,10 +140,10 @@ export default function Library() {
     <div className="max-w-7xl mx-auto" data-tour="module-library">
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <span className="text-[10px] font-bold text-brand-bordeaux uppercase tracking-[0.2em] mb-2 block">Repository</span>
-          <h1 className="font-headline font-bold text-5xl text-brand-bordeaux">Draft Library</h1>
+          <span className="text-[10px] font-bold text-brand-bordeaux uppercase tracking-[0.2em] mb-2 block">{t('lib.repo')}</span>
+          <h1 className="font-headline font-bold text-5xl text-brand-bordeaux">{t('lib.title')}</h1>
           <p className="font-body text-brand-navy/60 mt-4 text-lg max-w-2xl">
-            Manage and refine your drafted content. A repository of posts ready for publication.
+            {t('lib.subtitle')}
           </p>
         </div>
       </header>
@@ -155,7 +155,7 @@ export default function Library() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by keyword, voice, or topic..."
+            placeholder={t('lib.search')}
             className="input-field pl-12"
           />
         </div>
@@ -163,7 +163,7 @@ export default function Library() {
 
       {filteredDrafts.length === 0 && (
         <div className="text-center py-20">
-          <p className="text-brand-navy/40 text-lg">No drafts yet. Generate a post to see it here.</p>
+          <p className="text-brand-navy/40 text-lg">{t('lib.empty')}</p>
         </div>
       )}
 

@@ -15,7 +15,7 @@ export const HARDCODED_STYLE_RULES: StyleRule[] = [
     title: 'Pas de tirets longs',
     description: 'Jamais de tirets longs dans les textes',
     category: 'Formatage',
-    icon: '🚫',
+    icon: 'ban',
     isLocked: true,
   },
   {
@@ -23,7 +23,7 @@ export const HARDCODED_STYLE_RULES: StyleRule[] = [
     title: 'Ton direct et chaleureux',
     description: 'Pas de jargon corporate, phrases courtes',
     category: 'Ton',
-    icon: '💬',
+    icon: 'message-square',
     isLocked: true,
   },
   {
@@ -31,7 +31,7 @@ export const HARDCODED_STYLE_RULES: StyleRule[] = [
     title: 'Français naturel',
     description: 'Français parlé, pas de formules figées',
     category: 'Langue',
-    icon: '🇫🇷',
+    icon: 'flag',
     isLocked: true,
   },
   {
@@ -39,7 +39,7 @@ export const HARDCODED_STYLE_RULES: StyleRule[] = [
     title: 'Phrases interdites',
     description: "Pas de 'n'hésitez pas', 'je reviens vers vous', 'Si ça résonne'",
     category: 'Langue',
-    icon: '✋',
+    icon: 'hand',
     isLocked: true,
   },
   {
@@ -47,7 +47,7 @@ export const HARDCODED_STYLE_RULES: StyleRule[] = [
     title: 'Hashtags groupés',
     description: 'Tous les hashtags à la fin, jamais dans le texte',
     category: 'Formatage',
-    icon: '#',
+    icon: 'hash',
     isLocked: true,
   },
   {
@@ -55,7 +55,7 @@ export const HARDCODED_STYLE_RULES: StyleRule[] = [
     title: 'Exclamations limitées',
     description: 'Maximum 1-2 par post',
     category: 'Formatage',
-    icon: '❗',
+    icon: 'alert-circle',
     isLocked: true,
   },
 ];

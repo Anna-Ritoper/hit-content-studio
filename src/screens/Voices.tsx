@@ -18,6 +18,7 @@ import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { VoiceProfile, Language, EmojiUsage } from '../types';
 import { SIMONE_WHALE_DEFAULT } from '../constants';
+import { useI18n } from '../i18n';
 import { analyseTone } from '../services/aiService';
 import VoiceCreator from '../components/VoiceCreator';
 import { clsx, type ClassValue } from 'clsx';
@@ -39,6 +40,7 @@ const PRESET_COLORS = [
 ];
 
 export default function Voices() {
+  const { t } = useI18n();
   const [voices, setVoices] = useState<VoiceProfile[]>([SIMONE_WHALE_DEFAULT]);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -83,7 +85,7 @@ export default function Voices() {
   return (
     <div className="max-w-7xl mx-auto" data-tour="module-voices">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="font-headline text-3xl font-bold text-brand-bordeaux">Voices</h2>
+        <h2 className="font-headline text-3xl font-bold text-brand-bordeaux">{t('voices.title')}</h2>
         <button
           data-tour="voices-create"
           onClick={() => setIsCreating(true)}
@@ -171,15 +173,15 @@ export default function Voices() {
               <div className="w-20 h-20 bg-brand-bordeaux/5 rounded-full flex items-center justify-center text-brand-bordeaux mb-6">
                 <PenTool className="w-10 h-10" />
               </div>
-              <h3 className="font-headline text-3xl text-brand-bordeaux mb-4">Build AI Tone Profiles</h3>
+              <h3 className="font-headline text-3xl text-brand-bordeaux mb-4">{t('voices.build')}</h3>
               <p className="text-brand-navy/60 max-w-md mb-8">
-                Extract the unique writing style of your team members to generate posts that sound exactly like them.
+                {t('voices.buildDesc')}
               </p>
-              <button 
+              <button
                 onClick={() => setIsCreating(true)}
                 className="btn-primary"
               >
-                Create New Profile
+                {t('voices.create')}
               </button>
             </motion.div>
           )}
