@@ -15,7 +15,7 @@ import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestam
 import { useI18n } from '../i18n';
 import { CalendarEntry, VoiceProfile, PostStatus, Platform, Language } from '../types';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, getDay } from 'date-fns';
-import { isDemoMode, DEMO_CALENDAR_ENTRIES } from '../demoData';
+import { isDemoMode, DEMO_CALENDAR_ENTRIES, PERMANENT_CALENDAR_ENTRIES } from '../demoData';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -221,7 +221,11 @@ export default function Calendar() {
     ? ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
     : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  const allEntries = demo ? [...entries, ...DEMO_CALENDAR_ENTRIES] : entries;
+  const allEntries = [
+    ...entries,
+    ...PERMANENT_CALENDAR_ENTRIES,
+    ...(demo ? DEMO_CALENDAR_ENTRIES : []),
+  ];
 
   const getEntriesForDay = (day: Date) =>
     allEntries.filter(e => isSameDay(e.date.toDate(), day));

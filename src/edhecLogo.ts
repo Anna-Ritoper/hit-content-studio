@@ -11,31 +11,20 @@ export const EDHEC_LOGO_DARK_PATH = '/EDHEC_Logo_horizontal_dark.png';
  * Renders the EDHEC wordmark with geometric symbol at a given position.
  * Use inside an SVG <g> element with a transform for positioning.
  */
-export function edhecLogoSvgGroup(x: number, y: number, scale = 0.35): string {
-  return `<g transform="translate(${x},${y}) scale(${scale})">
-  <g transform="translate(60,60)" fill="#6B1E2E">
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(0)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(0)"/>
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(45)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(45)"/>
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(90)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(90)"/>
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(135)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(135)"/>
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(180)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(180)"/>
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(225)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(225)"/>
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(270)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(270)"/>
-    <rect x="-4" y="-48" width="8" height="18" rx="1" transform="rotate(315)"/>
-    <rect x="-6" y="-36" width="12" height="10" rx="1" transform="rotate(315)"/>
-    <path d="M-8,-18 A20,20 0 0,1 8,-18" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M18,-8 A20,20 0 0,1 18,8" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M8,18 A20,20 0 0,1 -8,18" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <path d="M-18,8 A20,20 0 0,1 -18,-8" stroke="#6B1E2E" stroke-width="4" fill="none" stroke-linecap="round"/>
-  </g>
-  <text x="130" y="72" font-family="Playfair Display, Georgia, serif" font-weight="700" font-size="64" fill="#6B1E2E" letter-spacing="2">EDHEC</text>
-  <text x="132" y="100" font-family="DM Sans, Helvetica Neue, sans-serif" font-weight="400" font-size="18" fill="#6B1E2E" letter-spacing="8">BUSINESS SCHOOL</text>
-</g>`;
+/**
+ * Renders the official EDHEC horizontal logo PNG as an SVG <image> element.
+ * variant controls which PNG to load (dark for light backgrounds, white for dark).
+ * The PNG native ratio is 2213x837 (about 2.64:1). width defaults to 260 so the
+ * image height stays near 98px at scale=1.
+ */
+export function edhecLogoSvgGroup(
+  x: number,
+  y: number,
+  scale = 0.35,
+  variant: 'dark' | 'white' = 'dark'
+): string {
+  const baseW = 520;
+  const baseH = Math.round(baseW * 837 / 2213);
+  const href = variant === 'white' ? EDHEC_LOGO_WHITE_PATH : EDHEC_LOGO_DARK_PATH;
+  return `<g transform="translate(${x},${y}) scale(${scale})"><image href="${href}" width="${baseW}" height="${baseH}" preserveAspectRatio="xMidYMid meet"/></g>`;
 }

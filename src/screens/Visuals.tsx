@@ -26,7 +26,8 @@ import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { StyleRule } from '../types';
 import { generateVisualSvg } from '../services/aiService';
 import { formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
-import { EDHEC_LOGO_PATH } from '../edhecLogo';
+import { EDHEC_LOGO_DARK_PATH, EDHEC_LOGO_WHITE_PATH } from '../edhecLogo';
+import { isDemoMode } from '../demoData';
 import PptxGenJS from 'pptxgenjs';
 import { useI18n } from '../i18n';
 
@@ -43,30 +44,43 @@ function stripSvgFences(raw: string): string {
   return match ? match[0] : out;
 }
 
-// Fetch the EDHEC logo SVG and convert to base64 PNG for PPTX embedding
-async function fetchLogoBase64(): Promise<string | null> {
+// Load an EDHEC logo PNG and return a data URL usable by pptxgenjs.
+async function fetchLogoBase64(variant: 'dark' | 'white' = 'dark'): Promise<string | null> {
   try {
-    const res = await fetch(EDHEC_LOGO_PATH);
-    const svgText = await res.text();
-    const blob = new Blob([svgText], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = reject;
-      img.src = url;
+    const path = variant === 'white' ? EDHEC_LOGO_WHITE_PATH : EDHEC_LOGO_DARK_PATH;
+    const res = await fetch(path);
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
     });
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth || 520;
-    canvas.height = img.naturalHeight || 120;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    URL.revokeObjectURL(url);
-    return canvas.toDataURL('image/png');
   } catch {
     return null;
   }
+}
+
+function buildCarouselSvg(programme: string, title: string, points: string[]): string {
+  const BORDEAUX = '#6B1E2E';
+  const CREAM = '#F5F0EC';
+  const CORAL = '#E07065';
+  const logoWhite = `<g transform="translate(820,960) scale(0.35)"><image href="${EDHEC_LOGO_WHITE_PATH}" width="520" height="197" preserveAspectRatio="xMidYMid meet"/></g>`;
+  const pts = points.slice(0, 3);
+  const ptItems = pts.map((p, i) => `<text x="540" y="${620 + i * 90}" text-anchor="middle" font-family="Montserrat, DM Sans, sans-serif" font-size="32" fill="${CREAM}">${escapeXml(p)}</text>`).join('');
+  return `<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1080" height="1080" fill="${BORDEAUX}"/>
+  <text x="540" y="200" text-anchor="middle" font-family="Montserrat, DM Sans, sans-serif" font-size="18" fill="${CREAM}" letter-spacing="4">${escapeXml(programme.toUpperCase())}</text>
+  <text x="540" y="420" text-anchor="middle" font-family="Montserrat, Playfair Display, serif" font-size="72" font-weight="700" fill="#FFFFFF">${escapeXml(title)}</text>
+  <line x1="440" y1="470" x2="640" y2="470" stroke="${CORAL}" stroke-width="3"/>
+  ${ptItems}
+  <text x="80" y="1020" font-family="DM Sans, sans-serif" font-size="14" fill="${CREAM}" opacity="0.7">Chaire Management in Innovative Health</text>
+  ${logoWhite}
+</svg>`;
+}
+
+function escapeXml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
 type SlideType = 'cover' | 'content' | 'stat' | 'columns' | 'cta';
@@ -144,47 +158,76 @@ export default function Visuals() {
 
   const exportPptxQuick = async () => {
     try {
-      const logoData = await fetchLogoBase64();
+      const logoDark = await fetchLogoBase64('dark');
+      const logoWhite = await fetchLogoBase64('white');
       const pptx = new PptxGenJS();
-      pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 7.5 });
-      pptx.layout = 'CUSTOM';
-
-      const addLogo = (slide: ReturnType<typeof pptx.addSlide>) => {
-        if (logoData) slide.addImage({ data: logoData, x: 7.5, y: 6.6, w: 2, h: 0.46 });
-      };
+      // 1080x1080 at 96 dpi : 11.25in x 11.25in square for LinkedIn carousels
+      pptx.defineLayout({ name: 'SQUARE', width: 11.25, height: 11.25 });
+      pptx.layout = 'SQUARE';
 
       const BORDEAUX = '6B1E2E';
       const CREAM = 'F5F0EC';
       const WHITE = 'FFFFFF';
-      const NAVY = '1A1F3C';
+      const CORAL = 'E07065';
+      const DARK_GREY = '333333';
+
+      const addLogo = (slide: ReturnType<typeof pptx.addSlide>, variant: 'dark' | 'white', opts?: { centered?: boolean }) => {
+        const data = variant === 'white' ? logoWhite : logoDark;
+        if (!data) return;
+        // PNG native 2213x837, ratio ~2.64
+        const w = 2.4;
+        const h = w * 837 / 2213;
+        if (opts?.centered) {
+          slide.addImage({ data, x: (11.25 - w) / 2, y: (11.25 - h) / 2 + 1, w, h });
+        } else {
+          slide.addImage({ data, x: 11.25 - w - 0.5, y: 11.25 - h - 0.5, w, h });
+        }
+      };
 
       const programme = (quickProgramme || 'Chaire Management in Innovative Health').toUpperCase();
       const title = quickTitle || 'HIT Content Studio';
-      const points = (quickKeyPoints || 'Point 1\nPoint 2\nPoint 3').split('\n').map(p => p.trim()).filter(Boolean);
-      const format = quickFormat || 'Carrousel';
+      const points = (quickKeyPoints || '').split('\n').map(p => p.trim()).filter(Boolean);
 
+      // Cover slide: bordeaux background, title white Montserrat bold 36pt, subtitle cream 18pt
       const cover = pptx.addSlide();
       cover.background = { color: BORDEAUX };
-      cover.addText(programme, { x: 0.8, y: 1, w: 8.4, h: 0.5, fontSize: 12, color: CREAM, fontFace: 'Arial', bold: true });
-      cover.addText(title, { x: 0.8, y: 2, w: 8.4, h: 2.5, fontSize: 32, color: WHITE, fontFace: 'Arial', bold: true, valign: 'top' });
-      cover.addText(format, { x: 0.8, y: 5, w: 8.4, h: 0.5, fontSize: 14, color: CREAM, fontFace: 'Arial' });
-      addLogo(cover);
+      cover.addText(programme, { x: 0.8, y: 1.2, w: 9.65, h: 0.6, fontSize: 14, color: CREAM, fontFace: 'Montserrat', bold: true, charSpacing: 4 });
+      cover.addText(title, { x: 0.8, y: 3.5, w: 9.65, h: 3.5, fontSize: 36, color: WHITE, fontFace: 'Montserrat', bold: true, valign: 'top', align: 'left' });
+      cover.addText('Chaire Management in Innovative Health : EDHEC Business School', { x: 0.8, y: 7.2, w: 9.65, h: 0.6, fontSize: 18, color: CREAM, fontFace: 'Montserrat' });
+      addLogo(cover, 'white');
 
+      // Content slides: cream background
       for (let i = 0; i < points.length; i++) {
         const slide = pptx.addSlide();
         slide.background = { color: CREAM };
-        slide.addText(`${i + 1}.`, { x: 0.8, y: 0.8, w: 1.2, h: 1, fontSize: 48, color: BORDEAUX, fontFace: 'Arial', bold: true });
-        slide.addText(title, { x: 0.8, y: 0.8, w: 8.4, h: 0.6, fontSize: 14, color: BORDEAUX, fontFace: 'Arial', bold: true, align: 'right' });
-        slide.addText(points[i] || ' ', { x: 0.8, y: 2.2, w: 8.4, h: 3.5, fontSize: 22, color: NAVY, fontFace: 'Arial', valign: 'top' });
-        slide.addText(`${i + 2} / ${points.length + 2}`, { x: 8, y: 6.5, w: 1.5, h: 0.5, fontSize: 9, color: '999999', fontFace: 'Arial', align: 'right' });
-        addLogo(slide);
+        slide.addText(`${String(i + 1).padStart(2, '0')}   ${title}`, { x: 0.8, y: 0.8, w: 9.65, h: 0.8, fontSize: 28, color: BORDEAUX, fontFace: 'Montserrat', bold: true });
+        slide.addShape(pptx.ShapeType.line, { x: 0.8, y: 1.8, w: 1.5, h: 0, line: { color: CORAL, width: 3 } });
+
+        // Key stat: first token that looks like a percentage or number
+        const stat = points[i].match(/[-]?\d+([.,]\d+)?\s*%?/);
+        const supporting = stat ? points[i].replace(stat[0], '').trim().replace(/^[:,\s-]+/, '') : points[i];
+
+        if (stat) {
+          slide.addText(stat[0], { x: 0.5, y: 3.8, w: 10.25, h: 2.5, fontSize: 120, color: CORAL, fontFace: 'Montserrat', bold: true, align: 'center' });
+          if (supporting) {
+            slide.addText(supporting, { x: 1, y: 6.8, w: 9.25, h: 2, fontSize: 20, color: DARK_GREY, fontFace: 'Montserrat', align: 'center', valign: 'top' });
+          }
+        } else {
+          slide.addText(points[i], { x: 1, y: 4.5, w: 9.25, h: 3, fontSize: 24, color: DARK_GREY, fontFace: 'Montserrat', align: 'center', valign: 'middle' });
+        }
+        addLogo(slide, 'dark');
       }
 
+      // CTA slide: bordeaux background, centered EDHEC logo, tagline
       const closing = pptx.addSlide();
       closing.background = { color: BORDEAUX };
-      closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 2.5, w: 8.4, h: 1, fontSize: 24, color: WHITE, fontFace: 'Arial', bold: true, align: 'center' });
-      closing.addText(title, { x: 0.8, y: 3.8, w: 8.4, h: 1, fontSize: 16, color: CREAM, fontFace: 'Arial', align: 'center' });
-      addLogo(closing);
+      closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 3, w: 9.65, h: 1, fontSize: 32, color: WHITE, fontFace: 'Montserrat', bold: true, align: 'center' });
+      closing.addText('EDHEC Business School', { x: 0.8, y: 4.2, w: 9.65, h: 0.8, fontSize: 20, color: CREAM, fontFace: 'Montserrat', align: 'center' });
+      if (logoWhite) {
+        const w = 3.6;
+        const h = w * 837 / 2213;
+        closing.addImage({ data: logoWhite, x: (11.25 - w) / 2, y: 6.5, w, h });
+      }
 
       await pptx.writeFile({ fileName: `HIT-Visual-${Date.now()}.pptx` });
     } catch (err) {
@@ -195,15 +238,18 @@ export default function Visuals() {
 
   const exportPptxCustom = async () => {
     try {
-    const logoData = await fetchLogoBase64();
+    const logoDark = await fetchLogoBase64('dark');
+    const logoWhite = await fetchLogoBase64('white');
     const pptx = new PptxGenJS();
-    pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 7.5 });
-    pptx.layout = 'CUSTOM';
+    pptx.defineLayout({ name: 'SQUARE', width: 11.25, height: 11.25 });
+    pptx.layout = 'SQUARE';
 
-    const addLogo = (s: ReturnType<typeof pptx.addSlide>) => {
-      if (logoData) {
-        s.addImage({ data: logoData, x: 7.5, y: 6.6, w: 2, h: 0.46 });
-      }
+    const addLogo = (s: ReturnType<typeof pptx.addSlide>, variant: 'dark' | 'white') => {
+      const data = variant === 'white' ? logoWhite : logoDark;
+      if (!data) return;
+      const w = 2.4;
+      const h = w * 837 / 2213;
+      s.addImage({ data, x: 11.25 - w - 0.5, y: 11.25 - h - 0.5, w, h });
     };
 
     const bgMap: Record<string, string> = {
@@ -224,28 +270,37 @@ export default function Visuals() {
       s.background = { color: bgMap[slide.background] || 'FFFFFF' };
       const tc = textMap[slide.background] || '1A1F3C';
       const title = slide.title || 'Untitled slide';
+      const logoVariant: 'dark' | 'white' = slide.background === 'bordeaux' ? 'white' : 'dark';
 
       if (slide.type === 'cover') {
-        s.addText(title, { x: 0.8, y: 2, w: 8.4, h: 2, fontSize: 32, color: tc, fontFace: 'Arial', bold: true, align: 'center' });
+        s.addText(title, { x: 0.8, y: 4, w: 9.65, h: 3, fontSize: 36, color: tc, fontFace: 'Montserrat', bold: true, align: 'center' });
         if (slide.subtitle) {
-          s.addText(slide.subtitle, { x: 0.8, y: 4.2, w: 8.4, h: 1, fontSize: 16, color: tc, fontFace: 'Arial', align: 'center' });
+          s.addText(slide.subtitle, { x: 0.8, y: 7.2, w: 9.65, h: 1, fontSize: 18, color: tc, fontFace: 'Montserrat', align: 'center' });
         }
       } else if (slide.type === 'stat') {
-        s.addText(slide.statValue || '0', { x: 0.8, y: 1.5, w: 8.4, h: 2.5, fontSize: 72, color: '6B1E2E', fontFace: 'Arial', bold: true, align: 'center' });
-        s.addText(slide.statLabel || title, { x: 0.8, y: 4, w: 8.4, h: 1, fontSize: 18, color: tc, fontFace: 'Arial', align: 'center' });
+        s.addText(slide.statValue || '0', { x: 0.5, y: 3.5, w: 10.25, h: 2.8, fontSize: 120, color: 'E07065', fontFace: 'Montserrat', bold: true, align: 'center' });
+        s.addText(slide.statLabel || title, { x: 1, y: 6.8, w: 9.25, h: 1.5, fontSize: 20, color: tc, fontFace: 'Montserrat', align: 'center' });
       } else if (slide.type === 'cta') {
         s.background = { color: '6B1E2E' };
-        s.addText(title, { x: 0.8, y: 2.5, w: 8.4, h: 1.5, fontSize: 28, color: 'FFFFFF', fontFace: 'Arial', bold: true, align: 'center' });
+        s.addText('Chaire Management in Innovative Health', { x: 0.8, y: 3, w: 9.65, h: 1, fontSize: 32, color: 'FFFFFF', fontFace: 'Montserrat', bold: true, align: 'center' });
+        s.addText(title, { x: 0.8, y: 4.2, w: 9.65, h: 1, fontSize: 20, color: 'F5F0EC', fontFace: 'Montserrat', align: 'center' });
+        if (logoWhite) {
+          const w = 3.6;
+          const h = w * 837 / 2213;
+          s.addImage({ data: logoWhite, x: (11.25 - w) / 2, y: 6.5, w, h });
+        }
+        continue;
       } else {
-        s.addText(title, { x: 0.8, y: 0.8, w: 8.4, h: 1, fontSize: 24, color: tc === 'FFFFFF' ? 'FFFFFF' : '6B1E2E', fontFace: 'Arial', bold: true });
+        s.addText(title, { x: 0.8, y: 0.8, w: 9.65, h: 1, fontSize: 28, color: tc === 'FFFFFF' ? 'FFFFFF' : '6B1E2E', fontFace: 'Montserrat', bold: true });
+        s.addShape(pptx.ShapeType.line, { x: 0.8, y: 1.8, w: 1.5, h: 0, line: { color: 'E07065', width: 3 } });
         if (slide.subtitle) {
-          s.addText(slide.subtitle, { x: 0.8, y: 1.8, w: 8.4, h: 0.6, fontSize: 14, color: tc, fontFace: 'Arial' });
+          s.addText(slide.subtitle, { x: 0.8, y: 2.2, w: 9.65, h: 0.8, fontSize: 18, color: tc, fontFace: 'Montserrat' });
         }
         if (slide.body) {
-          s.addText(slide.body, { x: 0.8, y: 2.6, w: 8.4, h: 3.5, fontSize: 14, color: tc, fontFace: 'Arial' });
+          s.addText(slide.body, { x: 0.8, y: 3.2, w: 9.65, h: 6, fontSize: 16, color: tc, fontFace: 'Montserrat', valign: 'top' });
         }
       }
-      addLogo(s);
+      addLogo(s, logoVariant);
     }
 
     await pptx.writeFile({ fileName: `HIT-Custom-Visual-${Date.now()}.pptx` });
@@ -274,8 +329,21 @@ export default function Visuals() {
     e.preventDefault();
     setIsGenerating(true);
     setGeneratedSvg('');
-    
+
+    const points = quickKeyPoints.split('\n').map(p => p.trim()).filter(Boolean);
+    const localSvg = buildCarouselSvg(
+      quickProgramme || 'Chaire Management in Innovative Health',
+      quickTitle,
+      points
+    );
+
     try {
+      if (isDemoMode()) {
+        // Brief delay for UX feedback, then return the locally built template
+        await new Promise(r => setTimeout(r, 600));
+        setGeneratedSvg(localSvg);
+        return;
+      }
       const additionalRules = formatStyleRules(styleRules);
       const svg = await generateVisualSvg({
         categoryLabel: quickProgramme.toUpperCase(),
@@ -285,9 +353,10 @@ export default function Visuals() {
         aspectRatio: quickFormat === 'Visuel unique' ? '1:1' : '4:5',
         additionalRules
       });
-      setGeneratedSvg(stripSvgFences(svg || ''));
+      setGeneratedSvg(stripSvgFences(svg || '') || localSvg);
     } catch (error) {
       console.error("Visual generation failed:", error);
+      setGeneratedSvg(localSvg);
     } finally {
       setIsGenerating(false);
     }
@@ -768,7 +837,7 @@ export default function Visuals() {
                   )}
                 >
                   <div className="flex justify-between items-start">
-                    {slide.elements.logo && <img src={EDHEC_LOGO_PATH} alt="" className="w-6 h-4 object-contain opacity-60" />}
+                    {slide.elements.logo && <img src={slide.background === 'bordeaux' ? EDHEC_LOGO_WHITE_PATH : EDHEC_LOGO_DARK_PATH} alt="" className="w-6 h-4 object-contain opacity-60" />}
                     <span className="text-[8px] opacity-30 font-bold">#{index + 1}</span>
                   </div>
                   
