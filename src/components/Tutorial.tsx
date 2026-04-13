@@ -17,21 +17,33 @@ export default function Tutorial({ launchKey = 0 }: TutorialProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const endedRef = useRef(false);
 
-  const steps: TourStep[] = useMemo(() => [
-    { route: '/generate', target: 'body', placement: 'center', title: t('tour.welcome.title'), content: t('tour.welcome.desc') },
-    { route: '/generate', target: '[data-tour="sidebar-nav"]', placement: 'right', title: t('tour.sidebar.title'), content: t('tour.sidebar.desc') },
-    { route: '/generate', target: '[data-tour="module-content"]', title: t('tour.content.title'), content: t('tour.content.desc') },
-    { route: '/generate', target: '[data-tour="voice-selector"]', title: t('tour.voice.title'), content: t('tour.voice.desc') },
-    { route: '/generate', target: '[data-tour="generate-button"]', title: t('tour.generate.title'), content: t('tour.generate.desc') },
-    { route: '/visuals', target: '[data-tour="module-visuals"]', title: t('tour.visuals.title'), content: t('tour.visuals.desc') },
-    { route: '/visuals', target: '[data-tour="visuals-mode-toggle"]', title: t('tour.visualsMode.title'), content: t('tour.visualsMode.desc') },
-    { route: '/calendar', target: '[data-tour="module-calendar"]', title: t('tour.calendar.title'), content: t('tour.calendar.desc') },
-    { route: '/calendar', target: '[data-tour="calendar-add"]', title: t('tour.calendarAdd.title'), content: t('tour.calendarAdd.desc') },
-    { route: '/voices', target: '[data-tour="module-voices"]', title: t('tour.voices.title'), content: t('tour.voices.desc') },
-    { route: '/voices', target: '[data-tour="voices-create"]', title: t('tour.voicesCreate.title'), content: t('tour.voicesCreate.desc') },
-    { route: '/library', target: '[data-tour="module-library"]', title: t('tour.library.title'), content: t('tour.library.desc') },
-    { route: '/style-guide', target: '[data-tour="module-styleguide"]', title: t('tour.styleguide.title'), content: t('tour.styleguide.desc') },
-  ], [t]);
+  const steps: TourStep[] = useMemo(() => {
+    const base: TourStep[] = [
+      { route: '/generate', target: 'body', placement: 'center', title: t('tour.welcome.title'), content: t('tour.welcome.desc') },
+      { route: '/generate', target: '[data-tour="sidebar-nav"]', placement: 'right', title: t('tour.sidebar.title'), content: t('tour.sidebar.desc') },
+      { route: '/generate', target: '[data-tour="module-content"]', title: t('tour.content.title'), content: t('tour.content.desc') },
+      { route: '/generate', target: '[data-tour="voice-selector"]', title: t('tour.voice.title'), content: t('tour.voice.desc') },
+      { route: '/generate', target: '[data-tour="generate-button"]', title: t('tour.generate.title'), content: t('tour.generate.desc') },
+      { route: '/visuals', target: '[data-tour="module-visuals"]', title: t('tour.visuals.title'), content: t('tour.visuals.desc') },
+      { route: '/visuals', target: '[data-tour="visuals-mode-toggle"]', title: t('tour.visualsMode.title'), content: t('tour.visualsMode.desc') },
+      { route: '/calendar', target: '[data-tour="module-calendar"]', title: t('tour.calendar.title'), content: t('tour.calendar.desc') },
+      { route: '/calendar', target: '[data-tour="calendar-add"]', title: t('tour.calendarAdd.title'), content: t('tour.calendarAdd.desc') },
+      { route: '/voices', target: '[data-tour="module-voices"]', title: t('tour.voices.title'), content: t('tour.voices.desc') },
+      { route: '/voices', target: '[data-tour="voices-create"]', title: t('tour.voicesCreate.title'), content: t('tour.voicesCreate.desc') },
+      { route: '/library', target: '[data-tour="module-library"]', title: t('tour.library.title'), content: t('tour.library.desc') },
+      { route: '/style-guide', target: '[data-tour="module-styleguide"]', title: t('tour.styleguide.title'), content: t('tour.styleguide.desc') },
+    ];
+    return base.map(s => ({
+      disableBeacon: true,
+      placement: s.placement || 'auto',
+      floaterProps: {
+        disableAnimation: false,
+        hideArrow: false,
+        options: { preventOverflow: { boundariesElement: 'viewport' } },
+      },
+      ...s,
+    }));
+  }, [t]);
 
   const endTour = useCallback(() => {
     endedRef.current = true;
@@ -107,7 +119,6 @@ export default function Tutorial({ launchKey = 0 }: TutorialProps) {
         textColor: '#1A1F3C',
         zIndex: 10000,
         showProgress: true,
-        skipBeacon: true,
       }}
     />
   );

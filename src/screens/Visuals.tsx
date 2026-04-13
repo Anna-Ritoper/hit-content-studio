@@ -28,6 +28,7 @@ import { generateVisualSvg } from '../services/aiService';
 import { formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
 import { EDHEC_LOGO_PATH } from '../edhecLogo';
 import PptxGenJS from 'pptxgenjs';
+import { useI18n } from '../i18n';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -90,6 +91,7 @@ interface Slide {
 }
 
 export default function Visuals() {
+  const { t } = useI18n();
   const [mode, setMode] = useState<'quick' | 'custom'>('quick');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedSvg, setGeneratedSvg] = useState('');
@@ -141,51 +143,58 @@ export default function Visuals() {
   };
 
   const exportPptxQuick = async () => {
-    const logoData = await fetchLogoBase64();
-    const pptx = new PptxGenJS();
-    pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 7.5 });
-    pptx.layout = 'CUSTOM';
+    try {
+      const logoData = await fetchLogoBase64();
+      const pptx = new PptxGenJS();
+      pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 7.5 });
+      pptx.layout = 'CUSTOM';
 
-    const addLogo = (slide: ReturnType<typeof pptx.addSlide>) => {
-      if (logoData) {
-        slide.addImage({ data: logoData, x: 7.5, y: 6.6, w: 2, h: 0.46 });
+      const addLogo = (slide: ReturnType<typeof pptx.addSlide>) => {
+        if (logoData) slide.addImage({ data: logoData, x: 7.5, y: 6.6, w: 2, h: 0.46 });
+      };
+
+      const BORDEAUX = '6B1E2E';
+      const CREAM = 'F5F0EC';
+      const WHITE = 'FFFFFF';
+      const NAVY = '1A1F3C';
+
+      const programme = (quickProgramme || 'Chaire Management in Innovative Health').toUpperCase();
+      const title = quickTitle || 'HIT Content Studio';
+      const points = (quickKeyPoints || 'Point 1\nPoint 2\nPoint 3').split('\n').map(p => p.trim()).filter(Boolean);
+      const format = quickFormat || 'Carrousel';
+
+      const cover = pptx.addSlide();
+      cover.background = { color: BORDEAUX };
+      cover.addText(programme, { x: 0.8, y: 1, w: 8.4, h: 0.5, fontSize: 12, color: CREAM, fontFace: 'Arial', bold: true });
+      cover.addText(title, { x: 0.8, y: 2, w: 8.4, h: 2.5, fontSize: 32, color: WHITE, fontFace: 'Arial', bold: true, valign: 'top' });
+      cover.addText(format, { x: 0.8, y: 5, w: 8.4, h: 0.5, fontSize: 14, color: CREAM, fontFace: 'Arial' });
+      addLogo(cover);
+
+      for (let i = 0; i < points.length; i++) {
+        const slide = pptx.addSlide();
+        slide.background = { color: CREAM };
+        slide.addText(`${i + 1}.`, { x: 0.8, y: 0.8, w: 1.2, h: 1, fontSize: 48, color: BORDEAUX, fontFace: 'Arial', bold: true });
+        slide.addText(title, { x: 0.8, y: 0.8, w: 8.4, h: 0.6, fontSize: 14, color: BORDEAUX, fontFace: 'Arial', bold: true, align: 'right' });
+        slide.addText(points[i] || ' ', { x: 0.8, y: 2.2, w: 8.4, h: 3.5, fontSize: 22, color: NAVY, fontFace: 'Arial', valign: 'top' });
+        slide.addText(`${i + 2} / ${points.length + 2}`, { x: 8, y: 6.5, w: 1.5, h: 0.5, fontSize: 9, color: '999999', fontFace: 'Arial', align: 'right' });
+        addLogo(slide);
       }
-    };
 
-    const programme = (quickProgramme || 'Chaire Management in Innovative Health').toUpperCase();
-    const title = quickTitle || 'HIT Content Studio';
-    const points = (quickKeyPoints || '').split('\n').map(p => p.trim()).filter(Boolean);
+      const closing = pptx.addSlide();
+      closing.background = { color: BORDEAUX };
+      closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 2.5, w: 8.4, h: 1, fontSize: 24, color: WHITE, fontFace: 'Arial', bold: true, align: 'center' });
+      closing.addText(title, { x: 0.8, y: 3.8, w: 8.4, h: 1, fontSize: 16, color: CREAM, fontFace: 'Arial', align: 'center' });
+      addLogo(closing);
 
-    // Cover slide
-    const cover = pptx.addSlide();
-    cover.background = { color: '6B1E2E' };
-    cover.addText(programme, { x: 0.8, y: 1, w: 8.4, h: 0.5, fontSize: 12, color: 'D4614A', fontFace: 'Arial', bold: true });
-    cover.addText(title, { x: 0.8, y: 2, w: 8.4, h: 2.5, fontSize: 32, color: 'FFFFFF', fontFace: 'Arial', bold: true, valign: 'top' });
-    cover.addText(quickFormat, { x: 0.8, y: 5, w: 8.4, h: 0.5, fontSize: 14, color: 'FAF8F4', fontFace: 'Arial' });
-    addLogo(cover);
-
-    // Content slides from key points
-    for (let i = 0; i < points.length; i++) {
-      const slide = pptx.addSlide();
-      slide.background = { color: 'FAF8F4' };
-      slide.addText(`${i + 1}.`, { x: 0.8, y: 0.8, w: 1.2, h: 1, fontSize: 48, color: 'D4614A', fontFace: 'Arial', bold: true });
-      slide.addText(title, { x: 0.8, y: 0.8, w: 8.4, h: 0.6, fontSize: 14, color: '6B1E2E', fontFace: 'Arial', bold: true, align: 'right' });
-      slide.addText(points[i], { x: 0.8, y: 2.2, w: 8.4, h: 3.5, fontSize: 22, color: '1A1F3C', fontFace: 'Arial', valign: 'top' });
-      slide.addText(`${i + 2} / ${points.length + 2}`, { x: 8, y: 6.5, w: 1.5, h: 0.5, fontSize: 9, color: '999999', fontFace: 'Arial', align: 'right' });
-      addLogo(slide);
+      await pptx.writeFile({ fileName: `HIT-Visual-${Date.now()}.pptx` });
+    } catch (err) {
+      console.error('PPTX export failed:', err);
+      alert('PPTX export failed : ' + (err as Error).message);
     }
-
-    // Closing slide
-    const closing = pptx.addSlide();
-    closing.background = { color: '1A1F3C' };
-    closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 2.5, w: 8.4, h: 1, fontSize: 24, color: 'FFFFFF', fontFace: 'Arial', bold: true, align: 'center' });
-    closing.addText(title, { x: 0.8, y: 3.8, w: 8.4, h: 1, fontSize: 16, color: 'D4614A', fontFace: 'Arial', align: 'center' });
-    addLogo(closing);
-
-    await pptx.writeFile({ fileName: `HIT-Visual-${Date.now()}.pptx` });
   };
 
   const exportPptxCustom = async () => {
+    try {
     const logoData = await fetchLogoBase64();
     const pptx = new PptxGenJS();
     pptx.defineLayout({ name: 'CUSTOM', width: 10, height: 7.5 });
@@ -199,7 +208,7 @@ export default function Visuals() {
 
     const bgMap: Record<string, string> = {
       bordeaux: '6B1E2E',
-      cream: 'FAF8F4',
+      cream: 'F5F0EC',
       white: 'FFFFFF',
       blue: 'F0F4F9',
     };
@@ -214,20 +223,21 @@ export default function Visuals() {
       const s = pptx.addSlide();
       s.background = { color: bgMap[slide.background] || 'FFFFFF' };
       const tc = textMap[slide.background] || '1A1F3C';
+      const title = slide.title || 'Untitled slide';
 
       if (slide.type === 'cover') {
-        s.addText(slide.title, { x: 0.8, y: 2, w: 8.4, h: 2, fontSize: 32, color: tc, fontFace: 'Arial', bold: true, align: 'center' });
+        s.addText(title, { x: 0.8, y: 2, w: 8.4, h: 2, fontSize: 32, color: tc, fontFace: 'Arial', bold: true, align: 'center' });
         if (slide.subtitle) {
           s.addText(slide.subtitle, { x: 0.8, y: 4.2, w: 8.4, h: 1, fontSize: 16, color: tc, fontFace: 'Arial', align: 'center' });
         }
       } else if (slide.type === 'stat') {
-        s.addText(slide.statValue || '', { x: 0.8, y: 1.5, w: 8.4, h: 2.5, fontSize: 72, color: 'D4614A', fontFace: 'Arial', bold: true, align: 'center' });
-        s.addText(slide.statLabel || '', { x: 0.8, y: 4, w: 8.4, h: 1, fontSize: 18, color: tc, fontFace: 'Arial', align: 'center' });
+        s.addText(slide.statValue || '0', { x: 0.8, y: 1.5, w: 8.4, h: 2.5, fontSize: 72, color: '6B1E2E', fontFace: 'Arial', bold: true, align: 'center' });
+        s.addText(slide.statLabel || title, { x: 0.8, y: 4, w: 8.4, h: 1, fontSize: 18, color: tc, fontFace: 'Arial', align: 'center' });
       } else if (slide.type === 'cta') {
-        s.background = { color: '1A1F3C' };
-        s.addText(slide.title, { x: 0.8, y: 2.5, w: 8.4, h: 1.5, fontSize: 28, color: 'FFFFFF', fontFace: 'Arial', bold: true, align: 'center' });
+        s.background = { color: '6B1E2E' };
+        s.addText(title, { x: 0.8, y: 2.5, w: 8.4, h: 1.5, fontSize: 28, color: 'FFFFFF', fontFace: 'Arial', bold: true, align: 'center' });
       } else {
-        s.addText(slide.title, { x: 0.8, y: 0.8, w: 8.4, h: 1, fontSize: 24, color: tc === 'FFFFFF' ? 'FFFFFF' : '6B1E2E', fontFace: 'Arial', bold: true });
+        s.addText(title, { x: 0.8, y: 0.8, w: 8.4, h: 1, fontSize: 24, color: tc === 'FFFFFF' ? 'FFFFFF' : '6B1E2E', fontFace: 'Arial', bold: true });
         if (slide.subtitle) {
           s.addText(slide.subtitle, { x: 0.8, y: 1.8, w: 8.4, h: 0.6, fontSize: 14, color: tc, fontFace: 'Arial' });
         }
@@ -239,6 +249,10 @@ export default function Visuals() {
     }
 
     await pptx.writeFile({ fileName: `HIT-Custom-Visual-${Date.now()}.pptx` });
+    } catch (err) {
+      console.error('PPTX export failed:', err);
+      alert('PPTX export failed : ' + (err as Error).message);
+    }
   };
 
   useEffect(() => {
@@ -400,7 +414,7 @@ export default function Visuals() {
                 type="text"
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
-                placeholder="ex: Arbitrer, gouverner, créer de la valeur grâce à l'IA"
+                placeholder={t('vis.titlePh')}
                 className="input-field"
                 required
               />
@@ -412,7 +426,7 @@ export default function Visuals() {
                 rows={5}
                 value={quickKeyPoints}
                 onChange={(e) => setQuickKeyPoints(e.target.value)}
-                placeholder="Un point par ligne..."
+                placeholder={t('vis.pointsPh')}
                 className="input-field resize-none"
                 required
               />
@@ -468,7 +482,7 @@ export default function Visuals() {
                   onClick={exportPptxQuick}
                   className="py-3 bg-brand-bordeaux text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-bordeaux/90 transition-all flex items-center justify-center gap-2"
                 >
-                  <Download className="w-4 h-4" /> Télécharger PPTX
+                  <Download className="w-4 h-4" /> {t('act.download')}
                 </button>
                 <button
                   onClick={(e) => handleGenerateQuick(e as any)}
@@ -604,7 +618,7 @@ export default function Visuals() {
                                 value={slide.title}
                                 onChange={(e) => updateSlide(slide.id, { title: e.target.value })}
                                 className="input-field"
-                                placeholder="Titre du slide"
+                                placeholder={t('vis.slideTitlePh')}
                               />
                             </div>
 
@@ -616,7 +630,7 @@ export default function Visuals() {
                                   value={slide.subtitle || ''}
                                   onChange={(e) => updateSlide(slide.id, { subtitle: e.target.value })}
                                   className="input-field"
-                                  placeholder="Sous-titre"
+                                  placeholder={t('vis.slideSubtitlePh')}
                                 />
                               </div>
                             )}
@@ -629,7 +643,7 @@ export default function Visuals() {
                                   value={slide.body || ''}
                                   onChange={(e) => updateSlide(slide.id, { body: e.target.value })}
                                   className="input-field resize-none"
-                                  placeholder="Contenu du slide..."
+                                  placeholder={t('vis.slideBodyPh')}
                                 />
                               </div>
                             )}
@@ -723,7 +737,7 @@ export default function Visuals() {
                     onClick={exportPptxCustom}
                     className="py-3 bg-brand-bordeaux text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-bordeaux/90 transition-all flex items-center justify-center gap-2"
                   >
-                    <Download className="w-4 h-4" /> Télécharger PPTX
+                    <Download className="w-4 h-4" /> {t('act.download')}
                   </button>
                   <button
                     onClick={handleGenerateCustom}

@@ -130,8 +130,33 @@ export const STRINGS: Dict = {
   'set.title': { FR: 'Reglages', EN: 'Settings' },
   'set.subtitle': { FR: "Gerez votre espace de travail et configurations IA.", EN: 'Manage your workspace, voice profiles, and AI configurations.' },
 
+  // Common actions
+  'act.cancel': { FR: 'Annuler', EN: 'Cancel' },
+  'act.save': { FR: 'Enregistrer', EN: 'Save' },
+  'act.download': { FR: 'Telecharger PPTX', EN: 'Download PPTX' },
+  'act.confirmDelete': { FR: 'Supprimer cette regle ?', EN: 'Delete this rule?' },
+
+  // Generate placeholders
+  'gen.topicPh': { FR: 'ex: Barometre sante connectee 2026, Webinaire IA en sante, MedInTechs 2026', EN: 'e.g. Connected Health Barometer 2026, AI in Healthcare Webinar, MedInTechs 2026' },
+  'gen.statsPh': { FR: "ex: 54% des Francais prets a utiliser l'IA pour leur sante, 63% des femmes ont du mal a acceder a un specialiste", EN: "e.g. 54% of French people ready to use AI for their health, 63% of women struggle to access a specialist" },
+  'gen.draftPh': { FR: 'Collez votre brouillon ou vos idees ici...', EN: 'Paste your rough draft or bullet points here...' },
+
   // Visuals
   'vis.title': { FR: 'Visual Studio', EN: 'Visual Studio' },
+  'vis.titlePh': { FR: "ex: Arbitrer, gouverner, creer de la valeur grace a l'IA", EN: 'e.g. Decide, govern, create value with AI' },
+  'vis.pointsPh': { FR: 'Un point par ligne...', EN: 'One point per line...' },
+  'vis.slideTitlePh': { FR: 'Titre du slide', EN: 'Slide title' },
+  'vis.slideSubtitlePh': { FR: 'Sous-titre', EN: 'Subtitle' },
+  'vis.slideBodyPh': { FR: 'Contenu du slide...', EN: 'Slide content...' },
+
+  // StyleGuide placeholders and labels
+  'sg.titlePh': { FR: 'ex: Pas de jargon', EN: 'e.g. No jargon' },
+  'sg.descPh': { FR: 'Expliquez la regle en quelques mots...', EN: 'Explain the rule in a few words...' },
+
+  // Calendar extra placeholders
+  'cal.voicePh': { FR: 'ex: Simone Whale', EN: 'e.g. Simone Whale' },
+  'cal.themePh': { FR: 'ex: Barometre, Evenement, Leadership', EN: 'e.g. Barometre, Event, Leadership' },
+  'cal.topicPh': { FR: 'De quoi parle ce post ?', EN: 'What is this post about?' },
   'vis.subtitle': { FR: 'Creez des visuels pour vos publications', EN: 'Create visuals for your posts' },
   'vis.quick': { FR: 'Mode rapide', EN: 'Quick mode' },
   'vis.custom': { FR: 'Mode personnalise', EN: 'Custom mode' },

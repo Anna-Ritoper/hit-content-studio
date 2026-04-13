@@ -138,7 +138,7 @@ export default function StyleGuide() {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm("Supprimer cette règle ?")) return;
+    if (!window.confirm(t('act.confirmDelete'))) return;
     try {
       await deleteDoc(doc(db, 'styleRules', id));
       fetchUserRules();
@@ -147,7 +147,16 @@ export default function StyleGuide() {
     }
   };
 
-  const BORDER_CYCLE = ['#6B1E2E', '#E07065', '#2A7D6B', '#D4A017'];
+  const BORDER_CYCLE = ['#6B1E2E', '#E07065', '#2A7D6B', '#C4973B'];
+  const RULE_COLORS: Record<string, string> = {
+    'rule-1': '#6B1E2E', // Pas de tirets longs : bordeaux
+    'rule-2': '#E07065', // Ton direct et chaleureux : coral
+    'rule-3': '#2A7D6B', // Francais naturel : teal
+    'rule-4': '#C4973B', // Phrases interdites : gold
+    'rule-5': '#6B1E2E', // Hashtags groupes : bordeaux
+    'rule-6': '#E07065', // Exclamations limitees : coral
+  };
+  const colorFor = (rule: StyleRule, idx: number) => RULE_COLORS[rule.id] || BORDER_CYCLE[idx % BORDER_CYCLE.length];
   const allRules = [...HARDCODED_STYLE_RULES, ...userRules];
 
   return (
@@ -165,14 +174,14 @@ export default function StyleGuide() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={() => !rule.isLocked && handleOpenModal(rule)}
-            style={{ borderLeftWidth: 4, borderLeftColor: BORDER_CYCLE[idx % BORDER_CYCLE.length] }}
+            style={{ borderLeftWidth: 4, borderLeftColor: colorFor(rule, idx) }}
             className={cn(
               "relative bg-white p-6 rounded-2xl shadow-sm transition-all duration-300 group",
               !rule.isLocked && "cursor-pointer hover:shadow-md hover:-translate-y-1"
             )}
           >
             <div className="flex items-start justify-between mb-4">
-              <RuleIcon name={rule.icon} color={BORDER_CYCLE[idx % BORDER_CYCLE.length]} />
+              <RuleIcon name={rule.icon} color={colorFor(rule, idx)} />
               {rule.isLocked ? (
                 <Lock className="w-3 h-3 text-brand-navy/20" />
               ) : (
@@ -225,31 +234,31 @@ export default function StyleGuide() {
 
               <form onSubmit={handleSave} className="space-y-6">
                 <div>
-                  <label className="input-label">Titre</label>
-                  <input 
+                  <label className="input-label">{t('sg.titleField')}</label>
+                  <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="input-field"
-                    placeholder="ex: Pas de jargon"
+                    placeholder={t('sg.titlePh')}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="input-label">Description</label>
-                  <textarea 
+                  <label className="input-label">{t('sg.description')}</label>
+                  <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     className="input-field min-h-[100px] resize-none"
-                    placeholder="Expliquez la règle en quelques mots..."
+                    placeholder={t('sg.descPh')}
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="input-label">Catégorie</label>
+                    <label className="input-label">{t('sg.category')}</label>
                     <select 
                       value={category}
                       onChange={(e) => setCategory(e.target.value as StyleCategory)}
@@ -261,7 +270,7 @@ export default function StyleGuide() {
                     </select>
                   </div>
                   <div>
-                    <label className="input-label">Icône</label>
+                    <label className="input-label">{t('sg.icon')}</label>
                     <select
                       value={icon}
                       onChange={(e) => setIcon(e.target.value)}
@@ -280,13 +289,13 @@ export default function StyleGuide() {
                     onClick={() => setIsModalOpen(false)}
                     className="flex-1 px-6 py-3 border border-brand-bordeaux/20 rounded-xl text-brand-bordeaux font-bold text-sm"
                   >
-                    Annuler
+                    {t('sg.cancel')}
                   </button>
-                  <button 
+                  <button
                     type="submit"
                     className="flex-1 btn-primary"
                   >
-                    Enregistrer
+                    {t('sg.save')}
                   </button>
                 </div>
               </form>

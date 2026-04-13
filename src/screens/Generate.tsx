@@ -283,7 +283,7 @@ export default function Generate() {
                   type="text"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
-                  placeholder="e.g. Baromètre santé connectée 2026, Webinaire IA en santé, MedInTechs 2026"
+                  placeholder={t('gen.topicPh')}
                   className="input-field"
                 />
               </div>
@@ -293,7 +293,7 @@ export default function Generate() {
                   rows={4}
                   value={stats}
                   onChange={(e) => setStats(e.target.value)}
-                  placeholder="e.g. 54% des Français prêts à utiliser l'IA pour leur santé, 63% des femmes ont du mal à accéder à un spécialiste"
+                  placeholder={t('gen.statsPh')}
                   className="input-field resize-none"
                 />
               </div>
@@ -305,7 +305,7 @@ export default function Generate() {
                 rows={8}
                 value={draftInput}
                 onChange={(e) => setDraftInput(e.target.value)}
-                placeholder="Paste your rough draft or bullet points here..."
+                placeholder={t('gen.draftPh')}
                 className="input-field resize-none"
               />
             </div>
