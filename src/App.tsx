@@ -16,6 +16,10 @@ import Library from './screens/Library';
 import Settings from './screens/Settings';
 import PasswordGate from './components/PasswordGate';
 import { I18nProvider } from './i18n';
+import { seedVoiceProfiles, seedContextLibrary } from './seedData';
+
+seedVoiceProfiles();
+seedContextLibrary();
 
 export default function App() {
   return (

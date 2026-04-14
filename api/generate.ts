@@ -1,8 +1,26 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Anthropic from '@anthropic-ai/sdk';
 
+const RATE_WINDOW_MS = 60 * 60 * 1000;
+const RATE_MAX = 30;
+const rateTimestamps: number[] = [];
+
+function checkRateLimit(): boolean {
+  const now = Date.now();
+  while (rateTimestamps.length > 0 && rateTimestamps[0] < now - RATE_WINDOW_MS) {
+    rateTimestamps.shift();
+  }
+  if (rateTimestamps.length >= RATE_MAX) return false;
+  rateTimestamps.push(now);
+  return true;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  if (!checkRateLimit()) {
+    return res.status(429).json({ error: 'Limite de generations atteinte. Reessayez dans quelques minutes.' });
+  }
 
   try {
     const key = process.env.ANTHROPIC_API_KEY;

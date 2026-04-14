@@ -18,6 +18,7 @@ import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible } from '../types';
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
+import { loadSeededVoices } from '../seedData';
 import { DEFAULT_HASHTAG_SETS } from '../demoData';
 import { generatePost, generateVisualSvg, getLengthBounds, countWords, truncateToWords } from '../services/aiService';
 import { sanitizeSvg } from '../services/sanitizeSvg';
@@ -42,9 +43,14 @@ export default function Generate() {
   const [postLength, setPostLength] = useState('Medium');
   const [language, setLanguage] = useState<Language | 'FR+EN'>('FR');
   const [platform, setPlatform] = useState<Platform>('LinkedIn');
-  const [selectedVoice, setSelectedVoice] = useState<VoiceProfile | null>(SIMONE_WHALE_DEFAULT);
-  const [voices, setVoices] = useState<VoiceProfile[]>([SIMONE_WHALE_DEFAULT]);
+  const initialVoices = (() => {
+    const seeded = loadSeededVoices();
+    return seeded.length > 0 ? seeded : [SIMONE_WHALE_DEFAULT];
+  })();
+  const [selectedVoice, setSelectedVoice] = useState<VoiceProfile | null>(initialVoices[0]);
+  const [voices, setVoices] = useState<VoiceProfile[]>(initialVoices);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState('');
   const [isVoiceCreatorOpen, setIsVoiceCreatorOpen] = useState(false);
   const [isVoiceDropdownOpen, setIsVoiceDropdownOpen] = useState(false);
   const [generatedContent, setGeneratedContent] = useState('');
@@ -180,6 +186,14 @@ export default function Generate() {
           if (!selectedVoice || selectedVoice.id === 'simone-whale-default') {
             setSelectedVoice(voicesData[0]);
           }
+        } else {
+          const seeded = loadSeededVoices();
+          if (seeded.length > 0) {
+            setVoices(seeded);
+            if (!selectedVoice || selectedVoice.id === 'simone-whale-default') {
+              setSelectedVoice(seeded[0]);
+            }
+          }
         }
       } catch (e) {
         console.error('fetch voices failed', e);
@@ -206,6 +220,7 @@ export default function Generate() {
   const handleGenerate = async () => {
     if (!selectedVoice) return;
     setIsGenerating(true);
+    setGenerationError('');
     setGeneratedContent('');
     
     try {
@@ -248,7 +263,8 @@ export default function Generate() {
       autoSaveDraft(finalText);
     } catch (error: any) {
       console.error("Generation failed:", error);
-      setGeneratedContent(`[Generation error: ${error.message || 'Unknown error'}. Please try again.]`);
+      const msg = error?.message || 'Unknown error';
+      setGenerationError(msg);
     } finally {
       setIsGenerating(false);
     }
@@ -690,6 +706,11 @@ export default function Generate() {
             {lengthWarning && (
               <div className="mb-3 px-3 py-2 bg-brand-coral/10 border border-brand-coral/30 rounded-md text-[11px] font-bold text-brand-coral">
                 {lengthWarning}
+              </div>
+            )}
+            {generationError && (
+              <div className="mb-3 px-3 py-2 bg-brand-bordeaux/10 border border-brand-bordeaux/30 rounded-md text-[11px] font-semibold text-brand-bordeaux">
+                {generationError}
               </div>
             )}
 

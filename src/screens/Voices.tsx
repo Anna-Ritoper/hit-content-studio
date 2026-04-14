@@ -18,6 +18,7 @@ import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { VoiceProfile, Language, EmojiUsage } from '../types';
 import { SIMONE_WHALE_DEFAULT } from '../constants';
+import { loadSeededVoices } from '../seedData';
 import { useI18n } from '../i18n';
 import { analyseTone } from '../services/aiService';
 import VoiceCreator from '../components/VoiceCreator';
@@ -41,7 +42,10 @@ const PRESET_COLORS = [
 
 export default function Voices() {
   const { t } = useI18n();
-  const [voices, setVoices] = useState<VoiceProfile[]>([SIMONE_WHALE_DEFAULT]);
+  const [voices, setVoices] = useState<VoiceProfile[]>(() => {
+    const seeded = loadSeededVoices();
+    return seeded.length > 0 ? seeded : [SIMONE_WHALE_DEFAULT];
+  });
   const [isCreating, setIsCreating] = useState(false);
   const [editingVoice, setEditingVoice] = useState<VoiceProfile | null>(null);
 
@@ -67,7 +71,12 @@ export default function Voices() {
       const q = query(collection(db, 'voiceProfiles'));
       const querySnapshot = await getDocs(q);
       const voicesData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as VoiceProfile));
-      if (voicesData.length > 0) setVoices(voicesData);
+      if (voicesData.length > 0) {
+        setVoices(voicesData);
+      } else {
+        const seeded = loadSeededVoices();
+        if (seeded.length > 0) setVoices(seeded);
+      }
     } catch (e) {
       console.error('fetch voices failed', e);
     }
