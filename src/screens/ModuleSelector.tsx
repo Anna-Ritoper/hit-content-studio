@@ -16,7 +16,7 @@ export default function ModuleSelector() {
 
   const modules = [
     { id: 'content', title: t('hub.content.title'), description: t('hub.content.desc'), icon: PenLine, path: '/generate', iconColor: 'text-brand-bordeaux', topColor: '#6B1E2E' },
-    { id: 'visual', title: t('hub.visual.title'), description: t('hub.visual.desc'), icon: ImageIcon, path: '/visuals', iconColor: 'text-brand-coral', topColor: '#E07065' },
+    { id: 'visual', title: t('hub.visual.title'), description: t('hub.visual.desc'), icon: ImageIcon, path: '/visuals', iconColor: 'text-brand-coral', topColor: '#D4614A' },
     { id: 'calendar', title: t('hub.calendar.title'), description: t('hub.calendar.desc'), icon: CalendarIcon, path: '/calendar', iconColor: 'text-brand-teal', topColor: '#2A7D6B' },
     { id: 'voices', title: t('hub.voices.title'), description: t('hub.voices.desc'), icon: Users, path: '/voices', iconColor: 'text-[#D4A017]', topColor: '#D4A017' },
   ];

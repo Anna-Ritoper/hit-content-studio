@@ -147,14 +147,14 @@ export default function StyleGuide() {
     }
   };
 
-  const BORDER_CYCLE = ['#6B1E2E', '#E07065', '#2A7D6B', '#C4973B'];
+  const BORDER_CYCLE = ['#6B1E2E', '#D4614A', '#2A7D6B', '#C4973B'];
   const RULE_COLORS: Record<string, string> = {
     'rule-1': '#6B1E2E', // Pas de tirets longs : bordeaux
-    'rule-2': '#E07065', // Ton direct et chaleureux : coral
+    'rule-2': '#D4614A', // Ton direct et chaleureux : coral
     'rule-3': '#2A7D6B', // Francais naturel : teal
     'rule-4': '#C4973B', // Phrases interdites : gold
     'rule-5': '#6B1E2E', // Hashtags groupes : bordeaux
-    'rule-6': '#E07065', // Exclamations limitees : coral
+    'rule-6': '#D4614A', // Exclamations limitees : coral
   };
   const colorFor = (rule: StyleRule, idx: number) => RULE_COLORS[rule.id] || BORDER_CYCLE[idx % BORDER_CYCLE.length];
   const allRules = [...HARDCODED_STYLE_RULES, ...userRules];

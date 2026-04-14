@@ -30,6 +30,7 @@ import { EDHEC_LOGO_DARK_PATH, EDHEC_LOGO_WHITE_PATH } from '../edhecLogo';
 import { isDemoMode } from '../demoData';
 import PptxGenJS from 'pptxgenjs';
 import { useI18n } from '../i18n';
+import { sanitizeSvg } from '../services/sanitizeSvg';
 import {
   buildSlideSpecs, renderSvg, slideCountForFormat, parsePoints,
   toPptxColor, type StyleId, type SlideSpec,
@@ -616,7 +617,7 @@ export default function Visuals() {
                 <div
                   className="bg-white border border-brand-bordeaux/10 rounded-xl shadow-xl p-4 overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
                   style={{ maxWidth: 600, maxHeight: 600, width: '100%', aspectRatio: '1 / 1' }}
-                  dangerouslySetInnerHTML={{ __html: renderSvg(slideSpecs[currentSlideIdx]) }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeSvg(renderSvg(slideSpecs[currentSlideIdx])) }}
                 />
                 {slideSpecs.length > 1 && (
                   <button
@@ -640,7 +641,7 @@ export default function Visuals() {
                         "w-16 aspect-square rounded border-2 transition-all overflow-hidden [&>svg]:w-full [&>svg]:h-full",
                         currentSlideIdx === i ? "border-brand-bordeaux scale-105" : "border-transparent opacity-60 hover:opacity-100"
                       )}
-                      dangerouslySetInnerHTML={{ __html: renderSvg(s) }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeSvg(renderSvg(s)) }}
                     />
                   ))}
                 </div>
@@ -898,7 +899,7 @@ export default function Visuals() {
                   <div
                     className="bg-white border border-brand-bordeaux/10 rounded-xl shadow-xl p-4 overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
                     style={{ maxWidth: 600, maxHeight: 600, width: '100%', aspectRatio: '1 / 1' }}
-                    dangerouslySetInnerHTML={{ __html: generatedSvg }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeSvg(generatedSvg) }}
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">

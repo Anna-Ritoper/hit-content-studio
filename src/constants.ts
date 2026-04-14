@@ -133,6 +133,8 @@ ${rules.map((rule, i) => `${i + 1}. [${rule.category}] ${rule.title}: ${rule.des
 export function cleanGeneratedText(text: string): string {
   return text
     .replace(/[\u2014\u2013]/g, ', ') // Replace em/en dashes with commas
-    .replace(/\s+/g, ' ')   // Normalize whitespace
+    // Collapse runs of horizontal whitespace (spaces, tabs) but keep newlines
+    // intact so LinkedIn post formatting survives the cleaning pass.
+    .replace(/[^\S\n]+/g, ' ')
     .trim();
 }

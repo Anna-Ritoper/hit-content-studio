@@ -76,6 +76,7 @@ export const STRINGS: Dict = {
   'gen.placeholder': { FR: 'Votre post genere apparaitra ici...', EN: 'Your generated post will appear here...' },
   'gen.regenerate': { FR: 'Regenerer', EN: 'Regenerate' },
   'gen.copy': { FR: 'Copier', EN: 'Copy' },
+  'gen.copied': { FR: 'Copie!', EN: 'Copied!' },
   'gen.saveCal': { FR: 'Enregistrer au calendrier', EN: 'Save to calendar' },
   'gen.genVisual': { FR: 'Generer un visuel', EN: 'Generate visual' },
 

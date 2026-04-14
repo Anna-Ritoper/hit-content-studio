@@ -9,7 +9,7 @@ import { EDHEC_LOGO_DARK_PATH, EDHEC_LOGO_WHITE_PATH } from '../edhecLogo';
 export const BORDEAUX = '#6B1E2E';
 export const CREAM = '#F5F0EC';
 export const WHITE = '#FFFFFF';
-export const CORAL = '#E07065';
+export const CORAL = '#D4614A';
 export const DARK = '#1A1F3C';
 export const MUTED = '#555555';
 

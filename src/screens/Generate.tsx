@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Sparkles, 
-  PenTool, 
-  RotateCcw, 
-  Copy, 
-  Calendar as CalendarIcon, 
-  Image as ImageIcon, 
+import {
+  Sparkles,
+  PenTool,
+  RotateCcw,
+  Copy,
+  Check,
+  Calendar as CalendarIcon,
+  Image as ImageIcon,
   Flag,
   ChevronDown,
   ChevronUp,
@@ -19,6 +20,7 @@ import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible }
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
 import { DEFAULT_HASHTAG_SETS } from '../demoData';
 import { generatePost, generateVisualSvg, getLengthBounds, countWords, truncateToWords } from '../services/aiService';
+import { sanitizeSvg } from '../services/sanitizeSvg';
 import VoiceCreator from '../components/VoiceCreator';
 import { useI18n } from '../i18n';
 import { clsx, type ClassValue } from 'clsx';
@@ -53,6 +55,18 @@ export default function Generate() {
   const [cta, setCta] = useState('');
   const [cible, setCible] = useState<Cible | null>(null);
   const [styleRules, setStyleRules] = useState<StyleRule[]>([]);
+  const [justCopied, setJustCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (!generatedContent.trim()) return;
+    try {
+      await navigator.clipboard.writeText(generatedContent);
+      setJustCopied(true);
+      setTimeout(() => setJustCopied(false), 2000);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchVoices = async () => {
@@ -498,8 +512,18 @@ export default function Generate() {
               >
                 <RotateCcw className="w-3 h-3" /> {t('gen.regenerate')}
               </button>
-              <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all">
-                <Copy className="w-3 h-3" /> {t('gen.copy')}
+              <button
+                onClick={handleCopy}
+                disabled={!generatedContent.trim()}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-2 border rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all disabled:opacity-40 disabled:cursor-not-allowed",
+                  justCopied
+                    ? "bg-brand-teal/10 border-brand-teal text-brand-teal"
+                    : "border-brand-bordeaux/10 text-brand-bordeaux hover:bg-brand-bordeaux/5"
+                )}
+              >
+                {justCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {justCopied ? t('gen.copied') : t('gen.copy')}
               </button>
               <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all">
                 <CalendarIcon className="w-3 h-3" /> {t('gen.saveCal')}
@@ -567,7 +591,7 @@ export default function Generate() {
                     <div 
                       id="visual-preview"
                       className="w-full bg-white border border-brand-bordeaux/10 rounded-lg overflow-hidden shadow-inner"
-                      dangerouslySetInnerHTML={{ __html: visualSvg }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeSvg(visualSvg) }}
                     />
                     <div className="flex gap-3">
                       <button 
@@ -610,7 +634,7 @@ export default function Generate() {
                   <div className="px-4 pb-4">
                     <div 
                       className="w-full rounded-md overflow-hidden border border-black/5"
-                      dangerouslySetInnerHTML={{ __html: visualSvg }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeSvg(visualSvg) }}
                     />
                   </div>
                 )}
