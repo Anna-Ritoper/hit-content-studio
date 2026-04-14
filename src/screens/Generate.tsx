@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, Timestamp, orderBy } from 'firebase/firestore';
-import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible } from '../types';
+import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule } from '../types';
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
 import { loadSeededVoices } from '../seedData';
 import { DEFAULT_HASHTAG_SETS } from '../demoData';
@@ -59,7 +59,29 @@ export default function Generate() {
   const [selectedHashtagSet, setSelectedHashtagSet] = useState<string | null>(null);
   const [link, setLink] = useState('');
   const [cta, setCta] = useState('');
-  const [cible, setCible] = useState<Cible | null>(null);
+  const [cibles, setCibles] = useState<string[]>([]);
+  const [customContentTypes, setCustomContentTypes] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('customContentTypes') || '[]'); } catch { return []; }
+  });
+  const [customAudiences, setCustomAudiences] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('customAudiences') || '[]'); } catch { return []; }
+  });
+  const [addingContentType, setAddingContentType] = useState(false);
+  const [newContentType, setNewContentType] = useState('');
+  const [addingAudience, setAddingAudience] = useState(false);
+  const [newAudience, setNewAudience] = useState('');
+
+  const persistCustomTypes = (arr: string[]) => {
+    setCustomContentTypes(arr);
+    try { localStorage.setItem('customContentTypes', JSON.stringify(arr)); } catch {}
+  };
+  const persistCustomAudiences = (arr: string[]) => {
+    setCustomAudiences(arr);
+    try { localStorage.setItem('customAudiences', JSON.stringify(arr)); } catch {}
+  };
+  const toggleCible = (c: string) => {
+    setCibles(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+  };
   const [styleRules, setStyleRules] = useState<StyleRule[]>([]);
   const [justCopied, setJustCopied] = useState(false);
   const [flagged, setFlagged] = useState(false);
@@ -142,7 +164,7 @@ export default function Generate() {
       localStorage.setItem('calendarEntries', JSON.stringify(arr));
     } catch (e) { console.error(e); }
     setSaveCalOpen(false);
-    showToast('Saved to calendar');
+    showToast(t('gen.toastSaved'));
   };
 
   const autoSaveDraft = (content: string) => {
@@ -160,7 +182,7 @@ export default function Generate() {
         flagged,
       });
       localStorage.setItem('drafts', JSON.stringify(arr));
-      showToast('Draft saved');
+      showToast(t('gen.toastDraftSaved'));
     } catch (e) { console.error(e); }
   };
 
@@ -242,7 +264,7 @@ export default function Generate() {
         hashtags: (DEFAULT_HASHTAG_SETS.find(s => s.name === selectedHashtagSet)?.hashtags || []).join(' '),
         draftInput,
         mode,
-        cible: cible || undefined,
+        cible: cibles.length > 0 ? cibles.join(', ') : undefined,
         additionalRules,
         contextSources: contextLibrary
           .filter(e => activeContextIds.includes(e.id))
@@ -255,7 +277,7 @@ export default function Generate() {
       let finalText = fullText || '';
       if (countWords(finalText) > maxWords) {
         finalText = truncateToWords(finalText, maxWords);
-        setLengthWarning(`Output exceeded ${maxWords} words and was truncated.`);
+        setLengthWarning(t('gen.truncated').replace('{max}', String(maxWords)));
       } else {
         setLengthWarning('');
       }
@@ -282,6 +304,27 @@ export default function Generate() {
     if (stats) setVisualStats(stats);
   }, [topic, stats]);
 
+  const extractStatsFromPost = (text: string): string => {
+    if (!text) return '';
+    const sentences = text
+      .split(/(?<=[.!?\n])\s+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && /\d/.test(s))
+      .slice(0, 3);
+    return sentences.join('\n');
+  };
+
+  const openVisualGenerator = () => {
+    const next = !showVisualGenerator;
+    setShowVisualGenerator(next);
+    if (next && generatedContent.trim()) {
+      if (!visualHeadline && topic) setVisualHeadline(topic);
+      if (!visualSubtitle) setVisualSubtitle(contentType);
+      const extracted = extractStatsFromPost(generatedContent);
+      if (extracted && !visualStats) setVisualStats(extracted);
+    }
+  };
+
   const handleGenerateVisual = async () => {
     setIsGeneratingVisual(true);
     try {
@@ -292,7 +335,8 @@ export default function Generate() {
         subtitle: visualSubtitle,
         statsArray: visualStats,
         aspectRatio: platform === 'LinkedIn' ? '1:1' : '9:16',
-        additionalRules
+        additionalRules,
+        language,
       });
       setVisualSvg(svg || '');
     } catch (error) {
@@ -338,7 +382,7 @@ export default function Generate() {
           </div>
           <div className="flex flex-col flex-1">
             <span className="font-headline text-base text-brand-bordeaux font-bold leading-tight">
-              {selectedVoice?.name || 'Select a voice'}
+              {selectedVoice?.name || t('gen.selectVoicePh')}
             </span>
             <span className="text-xs text-brand-navy/50 font-medium">
               {selectedVoice?.role || ''}
@@ -379,6 +423,12 @@ export default function Generate() {
                   </div>
                 </button>
               ))}
+              <button
+                onClick={() => { setIsVoiceDropdownOpen(false); setIsVoiceCreatorOpen(true); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-brand-teal/5 border-t border-brand-bordeaux/10 text-brand-teal text-xs font-bold"
+              >
+                {t('gen.createNewVoice')}
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -464,24 +514,130 @@ export default function Generate() {
                   {type}
                 </button>
               ))}
+              {customContentTypes.map(type => (
+                <span
+                  key={type}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border",
+                    contentType === type ? "bg-brand-bordeaux text-white border-brand-bordeaux" : "bg-white text-brand-navy/60 border-brand-bordeaux/10"
+                  )}
+                >
+                  <button onClick={() => setContentType(type)}>{type}</button>
+                  <button
+                    onClick={() => {
+                      persistCustomTypes(customContentTypes.filter(t => t !== type));
+                      if (contentType === type) setContentType('Baromètre');
+                    }}
+                    className="ml-0.5 opacity-70 hover:opacity-100"
+                    aria-label="remove"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </span>
+              ))}
+              {addingContentType ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={newContentType}
+                  onChange={(e) => setNewContentType(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const v = newContentType.trim();
+                      if (v && !customContentTypes.includes(v)) {
+                        persistCustomTypes([...customContentTypes, v]);
+                        setContentType(v);
+                      }
+                      setNewContentType('');
+                      setAddingContentType(false);
+                    } else if (e.key === 'Escape') {
+                      setNewContentType('');
+                      setAddingContentType(false);
+                    }
+                  }}
+                  onBlur={() => { setAddingContentType(false); setNewContentType(''); }}
+                  placeholder={t('gen.customTypePh')}
+                  className="px-3 py-1.5 rounded-full text-[10px] font-bold border border-brand-bordeaux/30 bg-white text-brand-bordeaux focus:outline-none"
+                />
+              ) : (
+                <button
+                  onClick={() => setAddingContentType(true)}
+                  className="px-3 py-1.5 rounded-full text-[10px] font-bold border border-dashed border-brand-bordeaux/30 text-brand-bordeaux hover:bg-brand-bordeaux/5"
+                >
+                  +
+                </button>
+              )}
             </div>
           </div>
 
           <div>
             <label className="input-label">{t('gen.target')}</label>
             <div className="flex flex-wrap gap-2">
-              {(['Professionnels de sante', 'Decideurs', 'Etudiants', 'Grand public', 'Partenaires', 'Academiques'] as Cible[]).map(c => (
+              {['Professionnels de sante', 'Decideurs', 'Etudiants', 'Grand public', 'Partenaires', 'Academiques'].map(c => (
                 <button
                   key={c}
-                  onClick={() => setCible(cible === c ? null : c)}
+                  onClick={() => toggleCible(c)}
                   className={cn(
                     "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border",
-                    cible === c ? "bg-brand-teal text-white border-brand-teal" : "bg-white text-brand-navy/60 border-brand-bordeaux/10"
+                    cibles.includes(c) ? "bg-brand-teal text-white border-brand-teal" : "bg-white text-brand-navy/60 border-brand-bordeaux/10"
                   )}
                 >
                   {c}
                 </button>
               ))}
+              {customAudiences.map(c => (
+                <span
+                  key={c}
+                  className={cn(
+                    "inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border",
+                    cibles.includes(c) ? "bg-brand-teal text-white border-brand-teal" : "bg-white text-brand-navy/60 border-brand-bordeaux/10"
+                  )}
+                >
+                  <button onClick={() => toggleCible(c)}>{c}</button>
+                  <button
+                    onClick={() => {
+                      persistCustomAudiences(customAudiences.filter(x => x !== c));
+                      setCibles(prev => prev.filter(x => x !== c));
+                    }}
+                    className="ml-0.5 opacity-70 hover:opacity-100"
+                    aria-label="remove"
+                  >
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </span>
+              ))}
+              {addingAudience ? (
+                <input
+                  autoFocus
+                  type="text"
+                  value={newAudience}
+                  onChange={(e) => setNewAudience(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const v = newAudience.trim();
+                      if (v && !customAudiences.includes(v)) {
+                        persistCustomAudiences([...customAudiences, v]);
+                        setCibles(prev => [...prev, v]);
+                      }
+                      setNewAudience('');
+                      setAddingAudience(false);
+                    } else if (e.key === 'Escape') {
+                      setNewAudience('');
+                      setAddingAudience(false);
+                    }
+                  }}
+                  onBlur={() => { setAddingAudience(false); setNewAudience(''); }}
+                  placeholder={t('gen.customAudiencePh')}
+                  className="px-3 py-1.5 rounded-full text-[10px] font-bold border border-brand-teal/30 bg-white text-brand-teal focus:outline-none"
+                />
+              ) : (
+                <button
+                  onClick={() => setAddingAudience(true)}
+                  className="px-3 py-1.5 rounded-full text-[10px] font-bold border border-dashed border-brand-teal/30 text-brand-teal hover:bg-brand-teal/5"
+                >
+                  +
+                </button>
+              )}
             </div>
           </div>
 
@@ -493,9 +649,9 @@ export default function Generate() {
                 onChange={(e) => setPostLength(e.target.value)}
                 className="input-field text-xs"
               >
-                <option value="Short">Short (150 to 300 words)</option>
-                <option value="Medium">Medium (300 to 800 words)</option>
-                <option value="Long">Long (800 to 1500 words)</option>
+                <option value="Short">{t('gen.lengthShort')}</option>
+                <option value="Medium">{t('gen.lengthMedium')}</option>
+                <option value="Long">{t('gen.lengthLong')}</option>
               </select>
             </div>
             <div>
@@ -575,10 +731,10 @@ export default function Generate() {
               className="flex items-center justify-between w-full text-brand-bordeaux font-bold text-xs uppercase tracking-widest"
             >
               <span className="flex items-center gap-2">
-                Context / Reference Material
+                {t('gen.context.title')}
                 {activeContextCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full bg-brand-teal text-white text-[9px] font-bold normal-case tracking-normal">
-                    {activeContextCount} source{activeContextCount === 1 ? '' : 's'} active
+                    {activeContextCount} {t('gen.context.sourcesActive')}
                   </span>
                 )}
               </span>
@@ -594,7 +750,7 @@ export default function Generate() {
                 >
                   {contextLibrary.length === 0 && (
                     <p className="text-[11px] text-brand-navy/50">
-                      Paste excerpts from brochures, reports, or previous posts. Toggle which entries are active for the next generation. Max 5 entries.
+                      {t('gen.context.empty')}
                     </p>
                   )}
                   {contextLibrary.map(entry => {
@@ -621,7 +777,7 @@ export default function Generate() {
                           <button
                             onClick={() => removeContextEntry(entry.id)}
                             className="text-brand-navy/30 hover:text-brand-coral"
-                            title="Remove"
+                            title={t('gen.context.remove')}
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -635,14 +791,14 @@ export default function Generate() {
                         type="text"
                         value={newContextTitle}
                         onChange={(e) => setNewContextTitle(e.target.value)}
-                        placeholder="Source title (e.g. Barometre 2026 exec summary)"
+                        placeholder={t('gen.context.titlePh')}
                         className="input-field text-xs"
                       />
                       <textarea
                         rows={3}
                         value={newContextBody}
                         onChange={(e) => setNewContextBody(e.target.value)}
-                        placeholder="Paste excerpt here..."
+                        placeholder={t('gen.context.bodyPh')}
                         className="input-field resize-none text-xs"
                       />
                       <button
@@ -650,7 +806,7 @@ export default function Generate() {
                         disabled={!newContextTitle.trim() || !newContextBody.trim()}
                         className="text-[10px] font-bold text-brand-teal uppercase tracking-widest disabled:opacity-40"
                       >
-                        + Add source
+                        {t('gen.context.add')}
                       </button>
                     </div>
                   )}
@@ -700,7 +856,7 @@ export default function Generate() {
                 "text-[10px] font-bold",
                 countWords(generatedContent) > getLengthBounds(postLength).max ? "text-brand-coral" : "text-brand-navy/40"
               )}>
-                {countWords(generatedContent)} words / max {getLengthBounds(postLength).max} | {generatedContent.length} chars
+                {countWords(generatedContent)} {t('gen.wordsMax')} {getLengthBounds(postLength).max} | {generatedContent.length} {t('gen.chars')}
               </span>
             </div>
             {lengthWarning && (
@@ -748,15 +904,15 @@ export default function Generate() {
               >
                 <CalendarIcon className="w-3 h-3" /> {t('gen.saveCal')}
               </button>
-              <button 
-                onClick={() => setShowVisualGenerator(!showVisualGenerator)}
+              <button
+                onClick={openVisualGenerator}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-teal uppercase tracking-widest hover:bg-brand-teal/5 transition-all"
               >
                 <ImageIcon className="w-3 h-3" /> {t('gen.genVisual')}
               </button>
               <button
                 onClick={() => setFlagged(f => !f)}
-                title={flagged ? 'Unflag' : 'Flag'}
+                title={flagged ? t('gen.unflag') : t('gen.flag')}
                 className={cn(
                   "p-2 border rounded-lg transition-all",
                   flagged
@@ -777,42 +933,42 @@ export default function Generate() {
                 exit={{ height: 0, opacity: 0 }}
                 className="card space-y-6 overflow-hidden"
               >
-                <h3 className="font-headline text-2xl text-brand-teal">Visual Generator</h3>
+                <h3 className="font-headline text-2xl text-brand-teal">{t('gen.visualGen')}</h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="input-label">Visual Headline</label>
-                    <input 
-                      type="text" 
+                    <label className="input-label">{t('gen.visualHeadline')}</label>
+                    <input
+                      type="text"
                       value={visualHeadline}
                       onChange={(e) => setVisualHeadline(e.target.value)}
-                      className="input-field" 
+                      className="input-field"
                     />
                   </div>
                   <div>
-                    <label className="input-label">Subtitle</label>
-                    <input 
-                      type="text" 
+                    <label className="input-label">{t('gen.visualSubtitle')}</label>
+                    <input
+                      type="text"
                       value={visualSubtitle}
                       onChange={(e) => setVisualSubtitle(e.target.value)}
-                      className="input-field" 
+                      className="input-field"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="input-label">Stats Array (one per line)</label>
-                  <textarea 
+                  <label className="input-label">{t('gen.visualStats')}</label>
+                  <textarea
                     rows={3}
                     value={visualStats}
                     onChange={(e) => setVisualStats(e.target.value)}
-                    className="input-field resize-none" 
+                    className="input-field resize-none"
                   />
                 </div>
-                <button 
+                <button
                   onClick={handleGenerateVisual}
                   disabled={isGeneratingVisual}
                   className="btn-secondary w-full"
                 >
-                  {isGeneratingVisual ? 'GENERATING VISUAL...' : 'GENERATE VISUAL'}
+                  {isGeneratingVisual ? t('gen.genVisualBtnLoading') : t('gen.genVisualBtn')}
                 </button>
 
                 {visualSvg && (
@@ -827,7 +983,7 @@ export default function Generate() {
                         onClick={handleDownloadPng}
                         className="flex-1 py-2 border border-brand-teal/20 rounded-lg text-[10px] font-bold text-brand-teal uppercase tracking-widest hover:bg-brand-teal/5 transition-all"
                       >
-                        Download PNG
+                        {t('gen.downloadPng')}
                       </button>
                     </div>
                   </div>
@@ -838,7 +994,7 @@ export default function Generate() {
 
           <div className="bg-brand-navy/5 rounded-xl p-8 border border-brand-bordeaux/5">
             <h3 className="text-[10px] font-bold text-brand-coral uppercase tracking-widest mb-6">
-              {platform} Preview
+              {platform === 'LinkedIn' ? t('gen.linkedinPreview') : t('gen.whatsappPreview')}
             </h3>
             
             {platform === 'LinkedIn' ? (
@@ -857,7 +1013,7 @@ export default function Generate() {
                   </div>
                 </div>
                 <div className="px-4 pb-4 text-sm text-black/90 whitespace-pre-wrap">
-                  {generatedContent || "The evolution of Digital Twins in healthcare isn't just about data: it's about the strategic future of health management. 🏥"}
+                  {generatedContent || t('gen.previewPlaceholder')}
                 </div>
                 {visualSvg && (
                   <div className="px-4 pb-4">
@@ -879,7 +1035,7 @@ export default function Generate() {
               <div className="max-w-[350px] mx-auto">
                 <div className="bg-[#E2FED6] rounded-2xl rounded-tl-none p-4 shadow-sm relative">
                   <div className="text-sm text-black/90 whitespace-pre-wrap">
-                    {generatedContent || "The evolution of Digital Twins in healthcare isn't just about data: it's about the strategic future of health management. 🏥"}
+                    {generatedContent || t('gen.previewPlaceholder')}
                   </div>
                   <div className="text-[10px] text-black/40 text-right mt-1">
                     10:45 AM
@@ -909,14 +1065,14 @@ export default function Generate() {
               className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-[110] p-8"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-headline text-2xl text-brand-bordeaux">Save to calendar</h3>
+                <h3 className="font-headline text-2xl text-brand-bordeaux">{t('gen.saveCalTitle')}</h3>
                 <button onClick={() => setSaveCalOpen(false)} className="p-2 hover:bg-brand-navy/5 rounded-full text-brand-navy/40">
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="input-label">Title</label>
+                  <label className="input-label">{t('gen.titleLabel')}</label>
                   <input
                     type="text"
                     value={calForm.title}
@@ -926,7 +1082,7 @@ export default function Generate() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="input-label">Voice</label>
+                    <label className="input-label">{t('gen.voiceLabel')}</label>
                     <input
                       type="text"
                       value={calForm.voice}
@@ -935,7 +1091,7 @@ export default function Generate() {
                     />
                   </div>
                   <div>
-                    <label className="input-label">Date</label>
+                    <label className="input-label">{t('gen.dateLabel')}</label>
                     <input
                       type="date"
                       value={calForm.date}
@@ -945,21 +1101,21 @@ export default function Generate() {
                   </div>
                 </div>
                 <div>
-                  <label className="input-label">Status</label>
+                  <label className="input-label">{t('gen.statusLabel')}</label>
                   <select
                     value={calForm.status}
                     onChange={(e) => setCalForm({ ...calForm, status: e.target.value as PostStatus })}
                     className="input-field"
                   >
                     {(['A rediger', 'Brouillon', 'Pret', 'Publie'] as PostStatus[]).map(s => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>{t(`status.${s}`)}</option>
                     ))}
                   </select>
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-8">
-                <button onClick={() => setSaveCalOpen(false)} className="px-4 py-2 text-brand-navy/60 font-bold text-sm">Cancel</button>
-                <button onClick={confirmSaveCal} disabled={!calForm.title || !calForm.date} className="btn-primary py-2">Save</button>
+                <button onClick={() => setSaveCalOpen(false)} className="px-4 py-2 text-brand-navy/60 font-bold text-sm">{t('gen.cancelBtn')}</button>
+                <button onClick={confirmSaveCal} disabled={!calForm.title || !calForm.date} className="btn-primary py-2">{t('gen.saveBtn')}</button>
               </div>
             </motion.div>
           </>

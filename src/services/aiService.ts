@@ -62,6 +62,10 @@ export const generatePost = async (params: {
   contextSources?: { title: string; content: string }[];
   onChunk?: (chunk: string) => void;
 }) => {
+  const langLabel = params.language === 'FR' ? 'French' : params.language === 'EN' ? 'English' : 'bilingual (French then English, separated by "---")';
+  const languageEnforcement = params.language === 'FR+EN'
+    ? `CRITICAL LANGUAGE RULE: You MUST write a bilingual post. First the full French version, then a line with just "---", then the full English version. Do not mix the two within a section.`
+    : `CRITICAL LANGUAGE RULE: You MUST write the entire post in ${langLabel}. Do not mix languages. Every word must be in ${langLabel}.`;
   const cibleLine = params.cible ? `- Target audience (cible): ${params.cible}. Adapt vocabulary, depth, and tone to this audience.` : '';
   const contextBlock = (params.contextSources && params.contextSources.length > 0)
     ? `\n\nReference material the post should draw from:\n${params.contextSources.map((s, i) => `[${i + 1}] ${s.title}\n${s.content}`).join('\n\n')}\n`
@@ -81,7 +85,9 @@ You MUST stay under the character limit. Count carefully. LinkedIn posts should 
     : '';
 
   const system = params.mode === 'generate'
-    ? `You are a content assistant for the EDHEC Management in Innovative Health Chair, a French business school research chair focused on healthcare innovation, digital health, and AI in healthcare.
+    ? `${languageEnforcement}
+
+You are a content assistant for the EDHEC Management in Innovative Health Chair, a French business school research chair focused on healthcare innovation, digital health, and AI in healthcare.
 
 You are writing a ${params.platform} post on behalf of ${params.voiceName}. ${params.systemPromptFragment}
 
@@ -106,7 +112,9 @@ Link to include: ${params.link || 'None'}
 Desired CTA: ${params.cta || 'None'}
 
 Write the post now. No preamble, no explanation. Just the post.`
-    : `You are a content assistant for the EDHEC Management in Innovative Health Chair.
+    : `${languageEnforcement}
+
+You are a content assistant for the EDHEC Management in Innovative Health Chair.
 
 You are refining a draft ${params.platform} post to be published on behalf of ${params.voiceName}. ${params.systemPromptFragment}
 
@@ -312,7 +320,10 @@ export const generateVisualSvg = async (params: {
   statsArray: string;
   aspectRatio: '1:1' | '4:5' | '9:16';
   additionalRules?: string;
+  language?: string;
 }) => {
+  const visualLangLabel = params.language === 'EN' ? 'English' : params.language === 'FR+EN' ? 'bilingual (French and English)' : 'French';
+  const visualLangRule = `CRITICAL LANGUAGE RULE: All text in the SVG (headline, subtitle, labels, CTA, captions) must be written in ${visualLangLabel}. Do not mix languages.`;
   // Demo mode: return sample SVG
   if (isDemoMode()) {
     await new Promise(r => setTimeout(r, 1500));
@@ -324,7 +335,9 @@ export const generateVisualSvg = async (params: {
   // EDHEC logo SVG snippet to embed in the bottom right of every visual
   const logoSnippet = edhecLogoSvgGroup(parseInt(viewBox.split(' ')[2]) - 260, parseInt(viewBox.split(' ')[3]) - 120, 0.35);
 
-  const prompt = `Generate a complete, valid SVG infographic (viewBox="${viewBox}") using the EDHEC Management in Innovative Health visual identity.
+  const prompt = `${visualLangRule}
+
+Generate a complete, valid SVG infographic (viewBox="${viewBox}") using the EDHEC Management in Innovative Health visual identity.
 
 Design rules:
 - Background: #FAF8F4 (warm off-white)

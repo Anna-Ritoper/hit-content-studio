@@ -193,10 +193,10 @@ export default function StyleGuide() {
                 </button>
               )}
             </div>
-            <h3 className="font-bold text-brand-navy mb-2">{rule.title}</h3>
-            <p className="text-xs text-brand-navy/60 leading-relaxed mb-4">{rule.description}</p>
+            <h3 className="font-bold text-brand-navy mb-2">{rule.isLocked ? t(`sg.rule.${rule.id}.title`) : rule.title}</h3>
+            <p className="text-xs text-brand-navy/60 leading-relaxed mb-4">{rule.isLocked ? t(`sg.rule.${rule.id}.desc`) : rule.description}</p>
             <span className="text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-bordeaux text-white">
-              {rule.category}
+              {t(`sg.cat.${rule.category}`)}
             </span>
           </motion.div>
         ))}
@@ -265,7 +265,7 @@ export default function StyleGuide() {
                       className="input-field"
                     >
                       {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat} value={cat}>{t(`sg.cat.${cat}`)}</option>
                       ))}
                     </select>
                   </div>
