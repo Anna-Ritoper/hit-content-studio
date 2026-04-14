@@ -56,6 +56,72 @@ export default function Generate() {
   const [cible, setCible] = useState<Cible | null>(null);
   const [styleRules, setStyleRules] = useState<StyleRule[]>([]);
   const [justCopied, setJustCopied] = useState(false);
+  const [flagged, setFlagged] = useState(false);
+  const [toast, setToast] = useState('');
+  const [saveCalOpen, setSaveCalOpen] = useState(false);
+  const [calForm, setCalForm] = useState({ title: '', voice: '', date: '', status: 'Brouillon' as PostStatus });
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(t => (t === msg ? '' : t)), 2200);
+  };
+
+  useEffect(() => {
+    if (selectedVoice?.id) {
+      try { localStorage.setItem('hit-current-voice-id', selectedVoice.id); } catch {}
+    }
+  }, [selectedVoice]);
+
+  const openSaveCal = () => {
+    if (!generatedContent.trim()) return;
+    setCalForm({
+      title: topic || generatedContent.slice(0, 50),
+      voice: selectedVoice?.name || '',
+      date: new Date().toISOString().slice(0, 10),
+      status: 'Brouillon',
+    });
+    setSaveCalOpen(true);
+  };
+
+  const confirmSaveCal = () => {
+    try {
+      const raw = localStorage.getItem('calendarEntries');
+      const arr = raw ? JSON.parse(raw) : [];
+      arr.push({
+        id: `local-${Date.now()}`,
+        title: calForm.title,
+        voice: calForm.voice,
+        date: calForm.date,
+        status: calForm.status,
+        topic,
+        content: generatedContent,
+        flagged,
+        createdAt: new Date().toISOString(),
+      });
+      localStorage.setItem('calendarEntries', JSON.stringify(arr));
+    } catch (e) { console.error(e); }
+    setSaveCalOpen(false);
+    showToast('Saved to calendar');
+  };
+
+  const autoSaveDraft = (content: string) => {
+    if (!content.trim()) return;
+    try {
+      const raw = localStorage.getItem('drafts');
+      const arr = raw ? JSON.parse(raw) : [];
+      arr.push({
+        id: `local-${Date.now()}`,
+        title: (topic || content).slice(0, 50),
+        voice: selectedVoice?.name || '',
+        date: new Date().toISOString(),
+        status: 'Brouillon' as PostStatus,
+        content,
+        flagged,
+      });
+      localStorage.setItem('drafts', JSON.stringify(arr));
+      showToast('Draft saved');
+    } catch (e) { console.error(e); }
+  };
 
   const handleCopy = async () => {
     if (!generatedContent.trim()) return;
@@ -141,6 +207,7 @@ export default function Generate() {
         setLengthWarning('');
       }
       if (finalText) setGeneratedContent(finalText);
+      autoSaveDraft(finalText);
     } catch (error: any) {
       console.error("Generation failed:", error);
       setGeneratedContent(`[Generation error: ${error.message || 'Unknown error'}. Please try again.]`);
@@ -525,7 +592,11 @@ export default function Generate() {
                 {justCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                 {justCopied ? t('gen.copied') : t('gen.copy')}
               </button>
-              <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all">
+              <button
+                onClick={openSaveCal}
+                disabled={!generatedContent.trim()}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-brand-bordeaux/10 rounded-lg text-[10px] font-bold text-brand-bordeaux uppercase tracking-widest hover:bg-brand-bordeaux/5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <CalendarIcon className="w-3 h-3" /> {t('gen.saveCal')}
               </button>
               <button 
@@ -534,8 +605,17 @@ export default function Generate() {
               >
                 <ImageIcon className="w-3 h-3" /> {t('gen.genVisual')}
               </button>
-              <button className="p-2 border border-brand-bordeaux/10 rounded-lg text-brand-coral hover:bg-brand-coral/5 transition-all">
-                <Flag className="w-4 h-4" />
+              <button
+                onClick={() => setFlagged(f => !f)}
+                title={flagged ? 'Unflag' : 'Flag'}
+                className={cn(
+                  "p-2 border rounded-lg transition-all",
+                  flagged
+                    ? "bg-brand-coral/10 border-brand-coral text-brand-coral"
+                    : "border-brand-bordeaux/10 text-brand-coral hover:bg-brand-coral/5"
+                )}
+              >
+                <Flag className="w-4 h-4" fill={flagged ? '#D4614A' : 'none'} />
               </button>
             </div>
           </div>
@@ -661,6 +741,95 @@ export default function Generate() {
           </div>
         </div>
       </div>
+
+      {/* Save-to-Calendar Modal */}
+      <AnimatePresence>
+        {saveCalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSaveCalOpen(false)}
+              className="fixed inset-0 bg-brand-navy/20 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-2xl shadow-2xl z-[110] p-8"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-headline text-2xl text-brand-bordeaux">Save to calendar</h3>
+                <button onClick={() => setSaveCalOpen(false)} className="p-2 hover:bg-brand-navy/5 rounded-full text-brand-navy/40">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="input-label">Title</label>
+                  <input
+                    type="text"
+                    value={calForm.title}
+                    onChange={(e) => setCalForm({ ...calForm, title: e.target.value })}
+                    className="input-field"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="input-label">Voice</label>
+                    <input
+                      type="text"
+                      value={calForm.voice}
+                      onChange={(e) => setCalForm({ ...calForm, voice: e.target.value })}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="input-label">Date</label>
+                    <input
+                      type="date"
+                      value={calForm.date}
+                      onChange={(e) => setCalForm({ ...calForm, date: e.target.value })}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="input-label">Status</label>
+                  <select
+                    value={calForm.status}
+                    onChange={(e) => setCalForm({ ...calForm, status: e.target.value as PostStatus })}
+                    className="input-field"
+                  >
+                    {(['A rediger', 'Brouillon', 'Pret', 'Publie'] as PostStatus[]).map(s => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-8">
+                <button onClick={() => setSaveCalOpen(false)} className="px-4 py-2 text-brand-navy/60 font-bold text-sm">Cancel</button>
+                <button onClick={confirmSaveCal} disabled={!calForm.title || !calForm.date} className="btn-primary py-2">Save</button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-brand-bordeaux text-white px-5 py-3 rounded-lg shadow-lg text-xs font-bold uppercase tracking-widest z-[200]"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Voices Slide-over */}
       <AnimatePresence>

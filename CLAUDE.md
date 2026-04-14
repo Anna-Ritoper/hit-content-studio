@@ -4,7 +4,7 @@ Internal AI content tool for EDHEC's Chaire Management in Innovative Health. Use
 
 ## Stack
 
-React 19 + TypeScript + Vite 8 + Tailwind CSS v4 (uses `@theme` in index.css, not tailwind.config). Express backend for API proxy. Firebase Firestore (db: `hit-content-studio-db`) + Firebase Auth (Google sign-in). Anthropic Claude API (`claude-sonnet-4-6`). Animation: `motion` (Framer Motion). Icons: `lucide-react`.
+React 19 + TypeScript + Vite 8 + Tailwind CSS v4 (uses `@theme` in index.css, not tailwind.config). Vercel serverless functions in `api/` for API proxy (no Express server). Firebase Firestore (db: `hit-content-studio-db`) + Firebase Auth (Google sign-in). Anthropic Claude API (`claude-sonnet-4-6`). Animation: `motion` (Framer Motion). Icons: `lucide-react`.
 
 ## Commands
 

@@ -201,13 +201,13 @@ export default function Library() {
               <span className="text-[10px] text-brand-navy/40">
                 {draft.createdAt && format((draft.createdAt as any).toDate(), 'MMM d, yyyy')}
               </span>
-              <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-all">
+              <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-all items-center">
                 <button
                   onClick={(e) => { e.stopPropagation(); openInGenerate(draft); }}
-                  className="text-brand-teal hover:text-brand-teal/80"
-                  title="Open in Generate"
+                  className="px-2 py-1 bg-brand-teal/10 text-brand-teal rounded-md text-[9px] font-bold uppercase tracking-widest hover:bg-brand-teal/20 flex items-center gap-1"
+                  title="Refine in Generate"
                 >
-                  <ExternalLink className="w-4 h-4" />
+                  <RotateCcw className="w-3 h-3" /> Refine
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(draft.id); }}

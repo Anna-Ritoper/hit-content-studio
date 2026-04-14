@@ -8,7 +8,8 @@ import {
   Trash2,
   Pencil,
   X,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp, orderBy } from 'firebase/firestore';
@@ -367,6 +368,13 @@ export default function Calendar() {
                         + {t('cal.addLinkedIn')}
                       </button>
                     )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openInGenerate(entry); }}
+                      className="p-1.5 text-brand-navy/40 hover:text-brand-teal hover:bg-brand-teal/5 rounded-md transition-all"
+                      title="Open in Generate"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); openEditForm(entry); }}
                       className="p-1.5 text-brand-navy/40 hover:text-brand-bordeaux hover:bg-brand-bordeaux/5 rounded-md transition-all"

@@ -43,6 +43,22 @@ export default function Voices() {
   const { t } = useI18n();
   const [voices, setVoices] = useState<VoiceProfile[]>([SIMONE_WHALE_DEFAULT]);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingVoice, setEditingVoice] = useState<VoiceProfile | null>(null);
+
+  const handleDeleteVoice = async (voice: VoiceProfile) => {
+    let currentId = '';
+    try { currentId = localStorage.getItem('hit-current-voice-id') || ''; } catch {}
+    if (voice.id === currentId) {
+      alert("Impossible de supprimer le profil actuellement selectionne dans Generate.");
+      return;
+    }
+    if (!window.confirm('Supprimer ce profil ?')) return;
+    try {
+      await deleteDoc(doc(db, 'voiceProfiles', voice.id));
+    } catch (e) { console.error(e); }
+    setVoices(vs => vs.filter(v => v.id !== voice.id));
+    fetchVoices();
+  };
 
   useEffect(() => { fetchVoices(); }, []);
 
@@ -137,12 +153,40 @@ export default function Voices() {
                 <Upload className="w-3.5 h-3.5" />
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoUpload(voice.id, e)} />
               </label>
-              <button className="text-brand-navy/40 hover:text-brand-bordeaux p-1"><Edit3 className="w-3.5 h-3.5" /></button>
-              <button className="text-brand-navy/40 hover:text-brand-coral p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setEditingVoice(voice)} className="text-brand-navy/40 hover:text-brand-bordeaux p-1" title="Edit"><Edit3 className="w-3.5 h-3.5" /></button>
+              <button onClick={() => handleDeleteVoice(voice)} className="text-brand-navy/40 hover:text-brand-coral p-1" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Edit Voice Slide-over */}
+      <AnimatePresence>
+        {editingVoice && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditingVoice(null)}
+              className="fixed inset-0 bg-brand-navy/20 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed right-0 top-0 h-full w-full max-w-2xl bg-white shadow-2xl z-[110] p-12 overflow-y-auto"
+            >
+              <VoiceCreator
+                initialVoice={editingVoice}
+                onClose={() => setEditingVoice(null)}
+                onSuccess={() => { setEditingVoice(null); fetchVoices(); }}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Wizard */}
       <div>

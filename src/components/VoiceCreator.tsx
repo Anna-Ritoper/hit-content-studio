@@ -14,7 +14,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { VoiceProfile, Language } from '../types';
 import { analyseTone } from '../services/aiService';
 import { clsx, type ClassValue } from 'clsx';
@@ -38,21 +38,35 @@ const PRESET_COLORS = [
 interface VoiceCreatorProps {
   onClose: () => void;
   onSuccess: (newVoice: VoiceProfile) => void;
+  initialVoice?: VoiceProfile;
 }
 
-export default function VoiceCreator({ onClose, onSuccess }: VoiceCreatorProps) {
-  const [step, setStep] = useState(1);
+export default function VoiceCreator({ onClose, onSuccess, initialVoice }: VoiceCreatorProps) {
+  const isEdit = !!initialVoice;
+  const [step, setStep] = useState(isEdit ? 3 : 1);
   const [isAnalysing, setIsAnalysing] = useState(false);
 
   // Form state
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('');
-  const [languages, setLanguages] = useState<Language[]>(['FR']);
-  const [avatarColor, setAvatarColor] = useState(PRESET_COLORS[0]);
+  const [name, setName] = useState(initialVoice?.name || '');
+  const [role, setRole] = useState(initialVoice?.role || '');
+  const [languages, setLanguages] = useState<Language[]>(initialVoice?.languages || ['FR']);
+  const [avatarColor, setAvatarColor] = useState(initialVoice?.avatarColor || PRESET_COLORS[0]);
   const [inputMethod, setInputMethod] = useState<'text' | 'images'>('images');
   const [samplePosts, setSamplePosts] = useState(['']);
   const [sampleImages, setSampleImages] = useState<{ data: string; mimeType: string; preview: string }[]>([]);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [analysisResult, setAnalysisResult] = useState<any>(
+    initialVoice
+      ? {
+          styleTags: initialVoice.styleTags,
+          structurePattern: initialVoice.structurePattern,
+          formalityScore: initialVoice.formalityScore,
+          emojiUsage: initialVoice.emojiUsage,
+          languageNotes: initialVoice.languageNotes,
+          sampleSentence: initialVoice.sampleSentence,
+          systemPromptFragment: initialVoice.systemPromptFragment,
+        }
+      : null
+  );
   const [error, setError] = useState<string | null>(null);
 
   const handleAnalyse = async () => {
@@ -95,23 +109,28 @@ export default function VoiceCreator({ onClose, onSuccess }: VoiceCreatorProps) 
   };
 
   const handleSave = async () => {
-    const newVoiceData = {
+    const base = {
       name,
       role,
       languages,
       avatarColor,
       ...analysisResult,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
+      updatedAt: Timestamp.now(),
     };
-    const docRef = await addDoc(collection(db, 'voiceProfiles'), newVoiceData);
-    onSuccess({ id: docRef.id, ...newVoiceData } as VoiceProfile);
+    if (isEdit && initialVoice) {
+      await updateDoc(doc(db, 'voiceProfiles', initialVoice.id), base);
+      onSuccess({ ...initialVoice, ...base } as VoiceProfile);
+    } else {
+      const newVoiceData = { ...base, createdAt: Timestamp.now() };
+      const docRef = await addDoc(collection(db, 'voiceProfiles'), newVoiceData);
+      onSuccess({ id: docRef.id, ...newVoiceData } as VoiceProfile);
+    }
   };
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="font-headline text-3xl font-bold text-brand-bordeaux">Create Voice</h2>
+        <h2 className="font-headline text-3xl font-bold text-brand-bordeaux">{isEdit ? 'Edit Voice' : 'Create Voice'}</h2>
         <button onClick={onClose} className="p-2 hover:bg-brand-navy/5 rounded-full text-brand-navy/40">
           <CloseIcon className="w-6 h-6" />
         </button>
