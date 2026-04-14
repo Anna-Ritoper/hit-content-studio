@@ -17,6 +17,7 @@ import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { VoiceProfile, Platform, Language, PostStatus, Draft, StyleRule, Cible } from '../types';
 import { SIMONE_WHALE_DEFAULT, formatStyleRules, HARDCODED_STYLE_RULES } from '../constants';
+import { DEFAULT_HASHTAG_SETS } from '../demoData';
 import { generatePost, generateVisualSvg, getLengthBounds, countWords, truncateToWords } from '../services/aiService';
 import VoiceCreator from '../components/VoiceCreator';
 import { useI18n } from '../i18n';
@@ -106,7 +107,9 @@ export default function Generate() {
         stats,
         link,
         cta,
-        hashtags: selectedHashtagSet || '',
+        // Resolve the selected set name to its actual hashtags before sending to the model.
+        // Previously we sent the set name as the literal hashtags string, which dropped the tags.
+        hashtags: (DEFAULT_HASHTAG_SETS.find(s => s.name === selectedHashtagSet)?.hashtags || []).join(' '),
         draftInput,
         mode,
         cible: cible || undefined,
@@ -413,17 +416,17 @@ export default function Generate() {
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden mt-3 space-y-2"
                 >
-                  {/* Mock hashtag sets */}
-                  {['Santé connectée', 'IA en santé', 'Baromètre', 'Événement', 'Certificats HIT'].map(set => (
+                  {DEFAULT_HASHTAG_SETS.map(set => (
                     <button
-                      key={set}
-                      onClick={() => setSelectedHashtagSet(set)}
+                      key={set.name}
+                      onClick={() => setSelectedHashtagSet(selectedHashtagSet === set.name ? null : set.name)}
                       className={cn(
                         "block w-full text-left px-3 py-2 rounded-md text-[10px] font-medium transition-all",
-                        selectedHashtagSet === set ? "bg-brand-bordeaux/10 text-brand-bordeaux" : "hover:bg-brand-bordeaux/5 text-brand-navy/60"
+                        selectedHashtagSet === set.name ? "bg-brand-bordeaux/10 text-brand-bordeaux" : "hover:bg-brand-bordeaux/5 text-brand-navy/60"
                       )}
                     >
-                      {set}
+                      <span className="font-bold">{set.name}</span>
+                      <span className="block text-brand-navy/40 truncate mt-0.5">{set.hashtags.join(' ')}</span>
                     </button>
                   ))}
                 </motion.div>

@@ -88,131 +88,145 @@ function ts(year: number, month: number, day: number): Timestamp {
   return Timestamp.fromDate(new Date(year, month - 1, day, 12, 0, 0));
 }
 
-// Permanent calendar entries: real historic posts shown regardless of demo mode.
-const BING_LI = 'https://lnkd.in/ensTwMru';
-const BING_8MARS_LI = 'https://www.linkedin.com/posts/bing-bai_in%C3%A9galit%C3%A9s-dacc%C3%A8s-aux-soins-activity-7436312275864641536--Gqh/';
+// Permanent calendar entries: real historic and scheduled posts shown regardless of demo mode.
+// Colors per voice:
+//   Bing Bai: teal   (#2A7D6B)
+//   Deborah Halimi Gerbi: coral (#D4614A)
+//   Simone Whale: bordeaux (#6B1E2E)
+//   Loick Menvielle: navy (#1A1F3C)
+const LINK_BING_JAN = 'https://lnkd.in/ensTwMru';
+const LINK_BING_FEB = 'https://lnkd.in/ensTwMru';
+const LINK_DEBORAH_MEDINTECHS = 'https://www.linkedin.com/posts/d%C3%A9borah-halimi-gerbi_medintechs-innovationensantaez-aiinhealth-share-7432730051781189632-_ikP';
+const LINK_BING_8MARS_INEG = 'https://www.linkedin.com/posts/bing-bai_in%C3%A9galit%C3%A9s-dacc%C3%A8s-aux-soins-ugcPost-7435317901819023360-N4Hj';
+const LINK_SIMONE_MEDINTECHS = 'https://www.linkedin.com/posts/simone-whale_day-1-of-medintechs-in-the-books-if-you-activity-7436881284901183488-pKf_';
+const LINK_DEBORAH_STRAT = 'https://www.linkedin.com/posts/d%C3%A9borah-halimi-gerbi_strat%C3%A9gie-et-leadership-en-sant%C3%A9-arbitrer-share-7444695095292895232-LL9L';
+const LINK_LOICK_STRAT = 'https://www.linkedin.com/posts/loick-menvielle-0b696446_certificat-strat%C3%A9gie-et-leadership-en-sant%C3%A9edhec-activity-7445391554699096064-cYAw';
+const LINK_LOICK_CAROUSEL = 'https://www.linkedin.com/posts/loick-menvielle-0b696446_carousel-%C3%A9quipe-p%C3%A9dagogiqueedhec-mih-activity-7447575352287223808-Gdi4';
+const LINK_SIMONE_MENOPAUSE = 'https://www.linkedin.com/posts/simone-whale_womenshealth-femtech-menopause-activity-7441829681840054272-RXJ6';
+const LINK_LOICK_IA = 'https://www.linkedin.com/posts/loick-menvielle-0b696446_sant%C3%A9-ia-innovation-tout-le-monde-en-activity-7448763797261082624-Ps51';
+const LINK_SIMONE_CHAIR = 'https://www.linkedin.com/posts/simone-whale_the-management-in-innovative-health-chair-activity-7447936813408665600-PL9W';
+
+const COLOR_BING = '#2A7D6B';
+const COLOR_DEBORAH = '#D4614A';
+const COLOR_SIMONE = '#6B1E2E';
+const COLOR_LOICK = '#1A1F3C';
 
 export const PERMANENT_CALENDAR_ENTRIES: CalendarEntry[] = [
   {
     id: 'perm-2026-01-28-bing-dpd',
-    date: ts(2026, 1, 28),
-    voiceProfileId: 'permanent',
-    voiceName: 'Bing Bai',
-    avatarColor: '#2A7D6B',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: 'Data Privacy Day',
-    topic: 'Journee protection des donnees : IA et sante',
-    status: 'Publie',
-    linkedinUrl: BING_LI,
-    createdAt: ts(2026, 1, 20),
+    date: ts(2026, 1, 28), voiceProfileId: 'permanent', voiceName: 'Bing Bai', avatarColor: COLOR_BING,
+    platform: 'LinkedIn', language: 'FR', theme: 'Protection des donnees',
+    topic: 'Journee protection des donnees',
+    status: 'Publie', linkedinUrl: LINK_BING_JAN, createdAt: ts(2026, 1, 20),
   },
   {
     id: 'perm-2026-02-24-bing-esante',
-    date: ts(2026, 2, 24),
-    voiceProfileId: 'permanent',
-    voiceName: 'Bing Bai',
-    avatarColor: '#2A7D6B',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: 'Sante connectee',
-    topic: 'Sante connectee : usage limite chez les patients chroniques',
-    status: 'Publie',
-    linkedinUrl: BING_LI,
-    createdAt: ts(2026, 2, 18),
+    date: ts(2026, 2, 24), voiceProfileId: 'permanent', voiceName: 'Bing Bai', avatarColor: COLOR_BING,
+    platform: 'LinkedIn', language: 'FR', theme: 'Sante connectee',
+    topic: 'Sante connectee, patients chroniques',
+    status: 'Publie', linkedinUrl: LINK_BING_FEB, createdAt: ts(2026, 2, 18),
   },
   {
-    id: 'perm-2026-02-28-medintechs',
-    date: ts(2026, 2, 28),
-    voiceProfileId: 'permanent',
-    voiceName: 'Chaire HIT',
-    avatarColor: '#6B1E2E',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: 'Evenement',
-    topic: 'MedInTechs 2026 : rendez-vous au Stand C21',
-    status: 'Publie',
-    createdAt: ts(2026, 2, 20),
+    id: 'perm-2026-02-28-deborah-medintechs',
+    date: ts(2026, 2, 28), voiceProfileId: 'permanent', voiceName: 'Deborah Halimi Gerbi', avatarColor: COLOR_DEBORAH,
+    platform: 'LinkedIn', language: 'FR', theme: 'Evenement',
+    topic: 'MedInTechs 2026, Stand C21',
+    status: 'Publie', linkedinUrl: LINK_DEBORAH_MEDINTECHS, createdAt: ts(2026, 2, 20),
   },
   {
     id: 'perm-2026-03-08-bing-inegalites',
-    date: ts(2026, 3, 8),
-    voiceProfileId: 'permanent',
-    voiceName: 'Bing Bai',
-    avatarColor: '#2A7D6B',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: '8 Mars',
-    topic: '8 Mars : inegalites acces aux soins',
-    status: 'Publie',
-    linkedinUrl: BING_8MARS_LI,
-    createdAt: ts(2026, 3, 1),
+    date: ts(2026, 3, 8), voiceProfileId: 'permanent', voiceName: 'Bing Bai', avatarColor: COLOR_BING,
+    platform: 'LinkedIn', language: 'FR', theme: '8 Mars',
+    topic: '8 Mars, inegalites acces soins',
+    status: 'Publie', linkedinUrl: LINK_BING_8MARS_INEG, createdAt: ts(2026, 3, 1),
   },
   {
     id: 'perm-2026-03-08-bing-ia-femmes',
-    date: ts(2026, 3, 8),
-    voiceProfileId: 'permanent',
-    voiceName: 'Bing Bai',
-    avatarColor: '#2A7D6B',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: '8 Mars',
-    topic: '8 Mars : IA en sante et femmes',
-    status: 'Publie',
-    createdAt: ts(2026, 3, 1),
+    date: ts(2026, 3, 8), voiceProfileId: 'permanent', voiceName: 'Bing Bai', avatarColor: COLOR_BING,
+    platform: 'LinkedIn', language: 'FR', theme: '8 Mars',
+    topic: '8 Mars, IA en sante des femmes',
+    status: 'Publie', createdAt: ts(2026, 3, 1),
   },
   {
     id: 'perm-2026-03-08-bing-data',
-    date: ts(2026, 3, 8),
-    voiceProfileId: 'permanent',
-    voiceName: 'Bing Bai',
-    avatarColor: '#2A7D6B',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: '8 Mars',
-    topic: '8 Mars : donnees de sante et IA',
-    status: 'Publie',
-    createdAt: ts(2026, 3, 1),
+    date: ts(2026, 3, 8), voiceProfileId: 'permanent', voiceName: 'Bing Bai', avatarColor: COLOR_BING,
+    platform: 'LinkedIn', language: 'FR', theme: '8 Mars',
+    topic: '8 Mars, donnees sante et IA',
+    status: 'Publie', createdAt: ts(2026, 3, 1),
   },
   {
-    id: 'perm-2026-03-09-medintechs-jourj',
-    date: ts(2026, 3, 9),
-    voiceProfileId: 'permanent',
-    voiceName: 'Chaire HIT',
-    avatarColor: '#6B1E2E',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: 'Evenement',
-    topic: 'MedInTechs 2026 : Jour J',
-    status: 'Publie',
-    createdAt: ts(2026, 3, 1),
+    id: 'perm-2026-03-09-simone-medintechs',
+    date: ts(2026, 3, 9), voiceProfileId: 'permanent', voiceName: 'Simone Whale', avatarColor: COLOR_SIMONE,
+    platform: 'LinkedIn', language: 'EN', theme: 'Evenement',
+    topic: 'MedInTechs, Jour J',
+    status: 'Publie', linkedinUrl: LINK_SIMONE_MEDINTECHS, createdAt: ts(2026, 3, 5),
+  },
+  {
+    id: 'perm-2026-03-18-deborah-strategie',
+    date: ts(2026, 3, 18), voiceProfileId: 'permanent', voiceName: 'Deborah Halimi Gerbi', avatarColor: COLOR_DEBORAH,
+    platform: 'LinkedIn', language: 'FR', theme: 'Certificats HIT',
+    topic: 'Certificat Strategie et Leadership',
+    status: 'Publie', linkedinUrl: LINK_DEBORAH_STRAT, createdAt: ts(2026, 3, 12),
+  },
+  {
+    id: 'perm-2026-03-20-loick-strategie',
+    date: ts(2026, 3, 20), voiceProfileId: 'permanent', voiceName: 'Loick Menvielle', avatarColor: COLOR_LOICK,
+    platform: 'LinkedIn', language: 'FR', theme: 'Certificats HIT',
+    topic: 'Certificat Strategie et Leadership',
+    status: 'Publie', linkedinUrl: LINK_LOICK_STRAT, createdAt: ts(2026, 3, 15),
+  },
+  {
+    id: 'perm-2026-03-27-loick-equipe',
+    date: ts(2026, 3, 27), voiceProfileId: 'permanent', voiceName: 'Loick Menvielle', avatarColor: COLOR_LOICK,
+    platform: 'LinkedIn', language: 'FR', theme: 'Equipe pedagogique',
+    topic: 'Equipe pedagogique, carousel',
+    status: 'Publie', linkedinUrl: LINK_LOICK_CAROUSEL, createdAt: ts(2026, 3, 22),
+  },
+  {
+    id: 'perm-2026-04-01-simone-menopause',
+    date: ts(2026, 4, 1), voiceProfileId: 'permanent', voiceName: 'Simone Whale', avatarColor: COLOR_SIMONE,
+    platform: 'LinkedIn', language: 'EN', theme: "Women's Health",
+    topic: "Women's Health, Femtech, Menopause",
+    status: 'Publie', linkedinUrl: LINK_SIMONE_MENOPAUSE, createdAt: ts(2026, 3, 28),
+  },
+  {
+    id: 'perm-2026-04-03-loick-sante-ia',
+    date: ts(2026, 4, 3), voiceProfileId: 'permanent', voiceName: 'Loick Menvielle', avatarColor: COLOR_LOICK,
+    platform: 'LinkedIn', language: 'FR', theme: 'Innovation sante',
+    topic: 'Sante, IA, Innovation',
+    status: 'Publie', linkedinUrl: LINK_LOICK_IA, createdAt: ts(2026, 4, 1),
+  },
+  {
+    id: 'perm-2026-04-08-simone-chair',
+    date: ts(2026, 4, 8), voiceProfileId: 'permanent', voiceName: 'Simone Whale', avatarColor: COLOR_SIMONE,
+    platform: 'LinkedIn', language: 'EN', theme: 'Chair',
+    topic: 'Management in Innovative Health Chair',
+    status: 'Publie', linkedinUrl: LINK_SIMONE_CHAIR, createdAt: ts(2026, 4, 5),
   },
   {
     id: 'perm-2026-04-15-deborah-certificats',
-    date: ts(2026, 4, 15),
-    voiceProfileId: 'permanent',
-    voiceName: 'Deborah Halimi Gerbi',
-    avatarColor: '#2A7D6B',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: 'Certificats HIT',
+    date: ts(2026, 4, 15), voiceProfileId: 'permanent', voiceName: 'Deborah Halimi Gerbi', avatarColor: COLOR_DEBORAH,
+    platform: 'LinkedIn', language: 'FR', theme: 'Certificats HIT',
     topic: 'Certificats HIT',
-    status: 'Pret',
-    createdAt: ts(2026, 4, 1),
+    status: 'Pret', createdAt: ts(2026, 4, 10),
   },
   {
     id: 'perm-2026-04-17-loick-leadership',
-    date: ts(2026, 4, 17),
-    voiceProfileId: 'permanent',
-    voiceName: 'Loick Menvielle',
-    avatarColor: '#D4614A',
-    platform: 'LinkedIn',
-    language: 'FR',
-    theme: 'Strategie',
+    date: ts(2026, 4, 17), voiceProfileId: 'permanent', voiceName: 'Loick Menvielle', avatarColor: COLOR_LOICK,
+    platform: 'LinkedIn', language: 'FR', theme: 'Certificats HIT',
     topic: 'Strategie et Leadership',
-    status: 'Pret',
-    createdAt: ts(2026, 4, 1),
+    status: 'Pret', createdAt: ts(2026, 4, 12),
   },
+];
+
+// Default hashtag sets used by Generate when Firestore has no sets (also in demo mode).
+// The Generate screen maps a selected set name to these actual hashtags.
+export const DEFAULT_HASHTAG_SETS: { name: string; hashtags: string[] }[] = [
+  { name: 'Sante connectee', hashtags: ['#SanteConnectee', '#eSante', '#InnovationSante', '#EDHEC'] },
+  { name: 'IA en sante',     hashtags: ['#IAenSante', '#DigitalHealth', '#HealthTech', '#AIinHealthcare', '#EDHEC'] },
+  { name: 'Barometre',       hashtags: ['#SanteConnectee', '#Ipsos', '#EDHEC', '#Data', '#HealthTech'] },
+  { name: 'Evenement',       hashtags: ['#EDHEC', '#InnovationSante', '#HealthTech', '#MedTech'] },
+  { name: 'Certificats HIT', hashtags: ['#EDHEC', '#HealthInnovation', '#ExecutiveEducation', '#HIT'] },
 ];
 
 const SAMPLE_LI_URL = 'https://www.linkedin.com/posts/chaire-management-innovative-health_edhec-hit-activity-123456789';

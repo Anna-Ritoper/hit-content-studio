@@ -30,6 +30,11 @@ import { EDHEC_LOGO_DARK_PATH, EDHEC_LOGO_WHITE_PATH } from '../edhecLogo';
 import { isDemoMode } from '../demoData';
 import PptxGenJS from 'pptxgenjs';
 import { useI18n } from '../i18n';
+import {
+  buildSlideSpecs, renderSvg, slideCountForFormat, parsePoints,
+  toPptxColor, type StyleId, type SlideSpec,
+} from '../services/visualTemplates';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -61,26 +66,18 @@ async function fetchLogoBase64(variant: 'dark' | 'white' = 'dark'): Promise<stri
   }
 }
 
-function buildCarouselSvg(programme: string, title: string, points: string[]): string {
-  const BORDEAUX = '#6B1E2E';
-  const CREAM = '#F5F0EC';
-  const CORAL = '#E07065';
-  const logoWhite = `<g transform="translate(820,960) scale(0.35)"><image href="${EDHEC_LOGO_WHITE_PATH}" width="520" height="197" preserveAspectRatio="xMidYMid meet"/></g>`;
-  const pts = points.slice(0, 3);
-  const ptItems = pts.map((p, i) => `<text x="540" y="${620 + i * 90}" text-anchor="middle" font-family="Montserrat, DM Sans, sans-serif" font-size="32" fill="${CREAM}">${escapeXml(p)}</text>`).join('');
-  return `<svg viewBox="0 0 1080 1080" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1080" height="1080" fill="${BORDEAUX}"/>
-  <text x="540" y="200" text-anchor="middle" font-family="Montserrat, DM Sans, sans-serif" font-size="18" fill="${CREAM}" letter-spacing="4">${escapeXml(programme.toUpperCase())}</text>
-  <text x="540" y="420" text-anchor="middle" font-family="Montserrat, Playfair Display, serif" font-size="72" font-weight="700" fill="#FFFFFF">${escapeXml(title)}</text>
-  <line x1="440" y1="470" x2="640" y2="470" stroke="${CORAL}" stroke-width="3"/>
-  ${ptItems}
-  <text x="80" y="1020" font-family="DM Sans, sans-serif" font-size="14" fill="${CREAM}" opacity="0.7">Chaire Management in Innovative Health</text>
-  ${logoWhite}
-</svg>`;
-}
-
-function escapeXml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+// Build all carousel slides from the current Quick Mode inputs. Both the
+// preview and the PPTX exporter consume this same array, so WYSIWYG holds.
+function buildQuickSlideSpecs(opts: {
+  format: string; style: string; programme: string; title: string; keyPoints: string;
+}): SlideSpec[] {
+  return buildSlideSpecs({
+    format: opts.format,
+    style: (opts.style as StyleId) || 'Bordeaux classique',
+    programme: opts.programme,
+    title: opts.title,
+    points: parsePoints(opts.keyPoints),
+  });
 }
 
 type SlideType = 'cover' | 'content' | 'stat' | 'columns' | 'cta';
@@ -110,7 +107,13 @@ export default function Visuals() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedSvg, setGeneratedSvg] = useState('');
   const [styleRules, setStyleRules] = useState<StyleRule[]>([]);
-  
+
+  // Quick Mode carousel state: array of slide specs + active index.
+  // The preview and the PPTX export both consume this exact array so what
+  // the user sees is what they get in the file.
+  const [slideSpecs, setSlideSpecs] = useState<SlideSpec[]>([]);
+  const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
+
   // Quick Mode State
   const [quickFormat, setQuickFormat] = useState('Carrousel 5 slides');
   const [quickStyle, setQuickStyle] = useState('Bordeaux classique');
@@ -158,6 +161,18 @@ export default function Visuals() {
 
   const exportPptxQuick = async () => {
     try {
+      // Rebuild specs from current inputs so the PPTX always matches the latest form,
+      // whether or not the user hit "Générer à nouveau" first.
+      const specs = slideSpecs.length > 0
+        ? slideSpecs
+        : buildQuickSlideSpecs({
+            format: quickFormat,
+            style: quickStyle,
+            programme: quickProgramme || 'Chaire Management in Innovative Health',
+            title: quickTitle,
+            keyPoints: quickKeyPoints,
+          });
+
       const logoDark = await fetchLogoBase64('dark');
       const logoWhite = await fetchLogoBase64('white');
       const pptx = new PptxGenJS();
@@ -165,16 +180,10 @@ export default function Visuals() {
       pptx.defineLayout({ name: 'SQUARE', width: 11.25, height: 11.25 });
       pptx.layout = 'SQUARE';
 
-      const BORDEAUX = '6B1E2E';
-      const CREAM = 'F5F0EC';
-      const WHITE = 'FFFFFF';
-      const CORAL = 'E07065';
-      const DARK_GREY = '333333';
-
       const addLogo = (slide: ReturnType<typeof pptx.addSlide>, variant: 'dark' | 'white', opts?: { centered?: boolean }) => {
         const data = variant === 'white' ? logoWhite : logoDark;
         if (!data) return;
-        // PNG native 2213x837, ratio ~2.64
+        // PNG native 2213x837, ratio about 2.64
         const w = 2.4;
         const h = w * 837 / 2213;
         if (opts?.centered) {
@@ -184,49 +193,109 @@ export default function Visuals() {
         }
       };
 
-      const programme = (quickProgramme || 'Chaire Management in Innovative Health').toUpperCase();
-      const title = quickTitle || 'HIT Content Studio';
-      const points = (quickKeyPoints || '').split('\n').map(p => p.trim()).filter(Boolean);
+      const isDarkHex = (hex: string) => {
+        const h = hex.replace('#', '');
+        if (h.length !== 6) return false;
+        const r = parseInt(h.slice(0, 2), 16);
+        const g = parseInt(h.slice(2, 4), 16);
+        const b = parseInt(h.slice(4, 6), 16);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b < 128;
+      };
 
-      // Cover slide: bordeaux background, title white Montserrat bold 36pt, subtitle cream 18pt
-      const cover = pptx.addSlide();
-      cover.background = { color: BORDEAUX };
-      cover.addText(programme, { x: 0.8, y: 1.2, w: 9.65, h: 0.6, fontSize: 14, color: CREAM, fontFace: 'Montserrat', bold: true, charSpacing: 4 });
-      cover.addText(title, { x: 0.8, y: 3.5, w: 9.65, h: 3.5, fontSize: 36, color: WHITE, fontFace: 'Montserrat', bold: true, valign: 'top', align: 'left' });
-      cover.addText('Chaire Management in Innovative Health : EDHEC Business School', { x: 0.8, y: 7.2, w: 9.65, h: 0.6, fontSize: 18, color: CREAM, fontFace: 'Montserrat' });
-      addLogo(cover, 'white');
-
-      // Content slides: cream background
-      for (let i = 0; i < points.length; i++) {
+      for (const s of specs) {
         const slide = pptx.addSlide();
-        slide.background = { color: CREAM };
-        slide.addText(`${String(i + 1).padStart(2, '0')}   ${title}`, { x: 0.8, y: 0.8, w: 9.65, h: 0.8, fontSize: 28, color: BORDEAUX, fontFace: 'Montserrat', bold: true });
-        slide.addShape(pptx.ShapeType.line, { x: 0.8, y: 1.8, w: 1.5, h: 0, line: { color: CORAL, width: 3 } });
+        const theme = s.theme;
 
-        // Key stat: first token that looks like a percentage or number
-        const stat = points[i].match(/[-]?\d+([.,]\d+)?\s*%?/);
-        const supporting = stat ? points[i].replace(stat[0], '').trim().replace(/^[:,\s-]+/, '') : points[i];
-
-        if (stat) {
-          slide.addText(stat[0], { x: 0.5, y: 3.8, w: 10.25, h: 2.5, fontSize: 120, color: CORAL, fontFace: 'Montserrat', bold: true, align: 'center' });
-          if (supporting) {
-            slide.addText(supporting, { x: 1, y: 6.8, w: 9.25, h: 2, fontSize: 20, color: DARK_GREY, fontFace: 'Montserrat', align: 'center', valign: 'top' });
+        if (s.kind === 'cover') {
+          slide.background = { color: toPptxColor(theme.coverBg) };
+          const onDark = isDarkHex(theme.coverBg);
+          slide.addText(s.programme.toUpperCase(), {
+            x: 0.8, y: 1.4, w: 9.65, h: 0.5,
+            fontSize: 14, color: toPptxColor(theme.coverAccent),
+            fontFace: 'Montserrat', bold: true, charSpacing: 4, align: 'center',
+          });
+          slide.addShape(pptx.ShapeType.line, {
+            x: 4.6, y: 2, w: 2, h: 0,
+            line: { color: toPptxColor(theme.coverAccent), width: 2 },
+          });
+          slide.addText(s.title || 'HIT Content Studio', {
+            x: 0.5, y: 3.5, w: 10.25, h: 3.5,
+            fontSize: 40, color: toPptxColor(theme.coverText),
+            fontFace: 'Montserrat', bold: true, align: 'center', valign: 'middle',
+          });
+          if (s.body) {
+            slide.addText(s.body.split('\n')[0], {
+              x: 0.8, y: 7.3, w: 9.65, h: 0.6,
+              fontSize: 18, color: toPptxColor(theme.coverText),
+              fontFace: 'Montserrat', align: 'center',
+            });
           }
+          addLogo(slide, onDark ? 'white' : 'dark');
+        } else if (s.kind === 'closing') {
+          slide.background = { color: toPptxColor(theme.closingBg) };
+          const onDark = isDarkHex(theme.closingBg);
+          slide.addText('EN SAVOIR PLUS', {
+            x: 0.8, y: 3.6, w: 9.65, h: 0.5,
+            fontSize: 14, color: toPptxColor(theme.closingAccent),
+            fontFace: 'Montserrat', bold: true, charSpacing: 4, align: 'center',
+          });
+          slide.addText('Chaire Management in Innovative Health', {
+            x: 0.8, y: 4.5, w: 9.65, h: 1,
+            fontSize: 32, color: toPptxColor(theme.closingText),
+            fontFace: 'Montserrat', bold: true, align: 'center',
+          });
+          slide.addText('EDHEC Business School', {
+            x: 0.8, y: 5.8, w: 9.65, h: 0.8,
+            fontSize: 20, color: toPptxColor(theme.closingText),
+            fontFace: 'Montserrat', align: 'center',
+          });
+          addLogo(slide, onDark ? 'white' : 'dark');
         } else {
-          slide.addText(points[i], { x: 1, y: 4.5, w: 9.25, h: 3, fontSize: 24, color: DARK_GREY, fontFace: 'Montserrat', align: 'center', valign: 'middle' });
-        }
-        addLogo(slide, 'dark');
-      }
+          // content slide
+          slide.background = { color: toPptxColor(theme.bodyBg) };
+          const onDark = isDarkHex(theme.bodyBg);
+          const badge = String(s.index - 1).padStart(2, '0');
+          slide.addText(`${badge}   ${(s.title || '').toUpperCase()}`, {
+            x: 0.8, y: 0.8, w: 9.65, h: 0.8,
+            fontSize: 18, color: toPptxColor('#6B1E2E'),
+            fontFace: 'Montserrat', bold: true, charSpacing: 4,
+          });
+          slide.addShape(pptx.ShapeType.line, {
+            x: 0.8, y: 1.6, w: 1.5, h: 0,
+            line: { color: toPptxColor(theme.bodyAccent), width: 3 },
+          });
 
-      // CTA slide: bordeaux background, centered EDHEC logo, tagline
-      const closing = pptx.addSlide();
-      closing.background = { color: BORDEAUX };
-      closing.addText('Chaire Management in Innovative Health', { x: 0.8, y: 3, w: 9.65, h: 1, fontSize: 32, color: WHITE, fontFace: 'Montserrat', bold: true, align: 'center' });
-      closing.addText('EDHEC Business School', { x: 0.8, y: 4.2, w: 9.65, h: 0.8, fontSize: 20, color: CREAM, fontFace: 'Montserrat', align: 'center' });
-      if (logoWhite) {
-        const w = 3.6;
-        const h = w * 837 / 2213;
-        closing.addImage({ data: logoWhite, x: (11.25 - w) / 2, y: 6.5, w, h });
+          if (s.stat) {
+            slide.addText(s.stat, {
+              x: 0.5, y: 3, w: 10.25, h: 3,
+              fontSize: 140, color: toPptxColor(theme.bodyAccent),
+              fontFace: 'Montserrat', bold: true, align: 'center', valign: 'middle',
+            });
+            if (s.body) {
+              slide.addText(s.body, {
+                x: 1, y: 6.5, w: 9.25, h: 2,
+                fontSize: 20, color: toPptxColor(theme.bodyText),
+                fontFace: 'Montserrat', align: 'center', valign: 'top',
+              });
+            }
+          } else {
+            if (s.heading) {
+              slide.addText(s.heading, {
+                x: 0.8, y: 2.5, w: 9.65, h: 2,
+                fontSize: 34, color: toPptxColor('#6B1E2E'),
+                fontFace: 'Montserrat', bold: true, valign: 'top',
+              });
+            }
+            if (s.body) {
+              slide.addText(s.body, {
+                x: 0.8, y: 4.8, w: 9.65, h: 4,
+                fontSize: 20, color: toPptxColor(theme.bodyText),
+                fontFace: 'Montserrat', valign: 'top',
+              });
+            }
+          }
+          addLogo(slide, onDark ? 'white' : 'dark');
+        }
       }
 
       await pptx.writeFile({ fileName: `HIT-Visual-${Date.now()}.pptx` });
@@ -330,36 +399,22 @@ export default function Visuals() {
     setIsGenerating(true);
     setGeneratedSvg('');
 
-    const points = quickKeyPoints.split('\n').map(p => p.trim()).filter(Boolean);
-    const localSvg = buildCarouselSvg(
-      quickProgramme || 'Chaire Management in Innovative Health',
-      quickTitle,
-      points
-    );
+    // Deterministic: every slide is built from the current form inputs.
+    // No LLM involved here, so the preview is exactly what the PPTX will contain.
+    const specs = buildQuickSlideSpecs({
+      format: quickFormat,
+      style: quickStyle,
+      programme: quickProgramme || 'Chaire Management in Innovative Health',
+      title: quickTitle,
+      keyPoints: quickKeyPoints,
+    });
 
-    try {
-      if (isDemoMode()) {
-        // Brief delay for UX feedback, then return the locally built template
-        await new Promise(r => setTimeout(r, 600));
-        setGeneratedSvg(localSvg);
-        return;
-      }
-      const additionalRules = formatStyleRules(styleRules);
-      const svg = await generateVisualSvg({
-        categoryLabel: quickProgramme.toUpperCase(),
-        headline: quickTitle,
-        subtitle: quickFormat,
-        statsArray: quickKeyPoints,
-        aspectRatio: quickFormat === 'Visuel unique' ? '1:1' : '4:5',
-        additionalRules
-      });
-      setGeneratedSvg(stripSvgFences(svg || '') || localSvg);
-    } catch (error) {
-      console.error("Visual generation failed:", error);
-      setGeneratedSvg(localSvg);
-    } finally {
-      setIsGenerating(false);
-    }
+    // Tiny delay for UX feedback so the spinner is visible.
+    await new Promise(r => setTimeout(r, 250));
+    setSlideSpecs(specs);
+    setCurrentSlideIdx(0);
+    setGeneratedSvg(renderSvg(specs[0]));
+    setIsGenerating(false);
   };
 
   const handleGenerateCustom = async () => {
@@ -524,28 +579,73 @@ export default function Visuals() {
             </div>
           </form>
 
-          {generatedSvg && (
+          {slideSpecs.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="mt-12 space-y-4"
             >
               <div className="flex items-center justify-between">
-                <h3 className="font-headline font-bold text-brand-navy">Résultat</h3>
+                <h3 className="font-headline font-bold text-brand-navy">
+                  Résultat
+                  {slideSpecs.length > 1 && (
+                    <span className="ml-2 text-xs text-brand-navy/50 font-medium">
+                      Slide {currentSlideIdx + 1} sur {slideSpecs.length}
+                    </span>
+                  )}
+                </h3>
                 <button
-                  onClick={() => setGeneratedSvg('')}
+                  onClick={() => { setSlideSpecs([]); setGeneratedSvg(''); }}
                   className="p-2 text-brand-navy/40 hover:text-brand-coral"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="flex justify-center">
+
+              <div className="flex items-center justify-center gap-3">
+                {slideSpecs.length > 1 && (
+                  <button
+                    onClick={() => setCurrentSlideIdx((i) => Math.max(0, i - 1))}
+                    disabled={currentSlideIdx === 0}
+                    className="p-2 rounded-full bg-white border border-brand-bordeaux/10 text-brand-bordeaux hover:bg-brand-bordeaux/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    aria-label="Slide précédent"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                )}
                 <div
                   className="bg-white border border-brand-bordeaux/10 rounded-xl shadow-xl p-4 overflow-auto flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:max-w-full [&>svg]:max-h-full"
                   style={{ maxWidth: 600, maxHeight: 600, width: '100%', aspectRatio: '1 / 1' }}
-                  dangerouslySetInnerHTML={{ __html: generatedSvg }}
+                  dangerouslySetInnerHTML={{ __html: renderSvg(slideSpecs[currentSlideIdx]) }}
                 />
+                {slideSpecs.length > 1 && (
+                  <button
+                    onClick={() => setCurrentSlideIdx((i) => Math.min(slideSpecs.length - 1, i + 1))}
+                    disabled={currentSlideIdx === slideSpecs.length - 1}
+                    className="p-2 rounded-full bg-white border border-brand-bordeaux/10 text-brand-bordeaux hover:bg-brand-bordeaux/5 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    aria-label="Slide suivant"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                )}
               </div>
+
+              {slideSpecs.length > 1 && (
+                <div className="flex gap-2 justify-center flex-wrap">
+                  {slideSpecs.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentSlideIdx(i)}
+                      className={cn(
+                        "w-16 aspect-square rounded border-2 transition-all overflow-hidden [&>svg]:w-full [&>svg]:h-full",
+                        currentSlideIdx === i ? "border-brand-bordeaux scale-105" : "border-transparent opacity-60 hover:opacity-100"
+                      )}
+                      dangerouslySetInnerHTML={{ __html: renderSvg(s) }}
+                    />
+                  ))}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <button
                   onClick={exportPptxQuick}
